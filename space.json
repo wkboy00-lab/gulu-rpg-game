@@ -2,7 +2,7 @@
   "runtime": "static",
   "platformVersion": 15,
   "entry": "index.html",
-  "name": "咕噜远征团",
-  "slug": "space",
+  "name": "咕噜远征团预览版",
+  "slug": "space-2",
   "managedCronJobs": []
 }
