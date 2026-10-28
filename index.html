@@ -290,6 +290,37 @@ input[type=text],input[type=number],select,textarea{background:#fffdf4;border:2p
 .mini58 svg{height:52px;width:auto;}
 .mini62 svg{height:62px;width:auto;}
 .mini44 svg{height:44px;width:auto;}
+/* First review pass: retain the existing art and palette. */
+#stage{height:100dvh;min-height:0;overflow:hidden}
+#view{min-height:0;overscroll-behavior:contain}
+#topbar{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,40px);gap:6px 8px}
+#topbar .ttl{display:block;grid-column:1;grid-row:1;font-size:14px}
+#topbar .res{grid-column:1/-1;grid-row:2;justify-content:flex-start;gap:5px;overflow:visible;flex-wrap:wrap}
+#topbar .res span{padding:2px 7px;font-variant-numeric:tabular-nums}
+#topbar .iconbtn{height:36px}
+.citywrap img{height:clamp(240px,38dvh,340px);aspect-ratio:auto;object-position:50% 55%}
+.hotspot{white-space:nowrap;padding:7px 9px;font-size:12px}
+.guildname{font-size:18px;letter-spacing:1px}
+.panel{border-width:2px;box-shadow:0 3px 8px rgba(0,0,0,.18);border-radius:12px}
+.objcard{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:center}
+.objcard>b{grid-column:1}.objcard .objtext{grid-column:1;margin-bottom:0;font-size:13px}
+.objcard .btn{grid-column:2;grid-row:1/3}
+.formreturn{position:sticky;top:0;z-index:10;margin-bottom:12px}
+.btop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.btop .timer{grid-column:1;grid-row:1;text-align:center;font-variant-numeric:tabular-nums}
+.btop>b{grid-column:2/-1;grid-row:1;line-height:1.4}
+.btop button{padding:6px 2px;min-height:40px}
+.bfield{min-height:0}
+.unit{transform:translateY(-50%)}
+.unit:not(.dead) .uimg>img{animation:unitbreath 3s ease-in-out infinite;transform-origin:50% 100%}
+.unit:nth-child(2n) .uimg>img{animation-delay:-1.5s}
+@keyframes unitbreath{50%{transform:translateY(-2px) scale(1.015)}}
+.ultbtn{min-width:0}
+.ultbtn small{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:10px}
+#blog{height:48px;flex-shrink:0}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid #64c9ff;outline-offset:3px}
+@media(max-height:650px){.unit .uimg,.unit .uimg svg,.unit .uimg img{height:60px}.unit.bossu .uimg,.unit.bossu .uimg svg,.unit.bossu .uimg img{height:80px}#blog{height:32px}#ultbar{padding-top:4px;padding-bottom:calc(4px + env(safe-area-inset-bottom))}.ultbtn .uart,.ultbtn .uart img{height:32px}}
+@media(prefers-reduced-motion:reduce){.unit .uimg>img,.page,.focusring{animation:none!important}}
 </style>
 </head>
 <body>
@@ -719,7 +750,19 @@ function defaultState(){
 }
 let S=null, saveTimer=null;
 function dbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(DBNAME,1);r.onupgradeneeded=()=>{r.result.createObjectStore(STORE);};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
-async function saveNow(){if(!S)return;try{const db=await dbOpen();const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(JSON.parse(JSON.stringify(S)),'main');}catch(e){}}
+async function saveNow(){
+ if(!S)return false;
+ clearTimeout(saveTimer);
+ let db;
+ try{
+  const snapshot=JSON.parse(JSON.stringify(S));db=await dbOpen();
+  await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('存档事务中止'));tx.objectStore(STORE).put(snapshot,'main');});
+  return true;
+ }catch(e){toast('自动保存失败，请到设置导出存档备份',4500);return false;}
+ finally{if(db)db.close();}
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&S)saveNow();});
+window.addEventListener('pagehide',()=>{if(S)saveNow();});
 function save(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250);}
 async function loadSave(){try{const db=await dbOpen();return await new Promise(res=>{const rq=db.transaction(STORE).objectStore(STORE).get('main');rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);});}catch(e){return null;}}
 function migrate(st){if(!st||st.schemaVersion!==SCHEMA)return null;const d=defaultState();const merged=Object.assign(d,st);merged.res=Object.assign(d.res,st.res||{});merged.settings=Object.assign(d.settings,st.settings||{});merged.daily=Object.assign(d.daily,st.daily||{});merged.shop=Object.assign(d.shop,st.shop||{});merged.shop.cards=Object.assign(d.shop.cards,(st.shop||{}).cards||{});merged.shop.fund=Object.assign(d.shop.fund,(st.shop||{}).fund||{});merged.shop.pass=Object.assign(d.shop.pass,(st.shop||{}).pass||{});merged.skins=Object.assign(d.skins,st.skins||{});merged.skins.owned=Object.assign({},(st.skins||{}).owned||{});merged.skins.worn=Object.assign({},(st.skins||{}).worn||{});merged.season=Object.assign(d.season,st.season||{});merged.season.cleared=Object.assign({},(st.season||{}).cleared||{});merged.season.shopBought=Object.assign({},(st.season||{}).shopBought||{});merged.arena=Object.assign(d.arena,st.arena||{});merged.arena.hist=Array.isArray((st.arena||{}).hist)?(st.arena||{}).hist.slice(0,20):[];return merged;}
@@ -1207,7 +1250,7 @@ function enemyActive(u){
 }
 /* ---------------- 单位构建 ---------------- */
 let unitSeq=0;
-function baseUnit(o){return Object.assign({uid:'u'+(++unitSeq),alive:true,hp:o.maxHp,energy:20,atkT:600+Math.random()*400,cd:o.cd0||4000,buffs:[],shields:[],stats:{dmg:0,heal:0,taken:0},flags:{},cast:null,basicHits:0,crit:5,healPct:0,resist:0,isBoss:false,kind:'basic',skLv:{active:1,ult:1,passive:1}},o);}
+function baseUnit(o){return Object.assign({uid:'u'+(++unitSeq),alive:true,hp:o.maxHp,energy:20,atkT:600+B.rng()*400,cd:o.cd0||4000,buffs:[],shields:[],stats:{dmg:0,heal:0,taken:0},flags:{},cast:null,basicHits:0,crit:5,healPct:0,resist:0,isBoss:false,kind:'basic',skLv:{active:1,ult:1,passive:1}},o);}
 function buildHeroUnits(){
  const bonds=calcBonds(S.formation);
  return S.formation.map((id,pos)=>{if(!id)return null;const H=HEROES[id],st=heroStats(id);
@@ -1372,7 +1415,7 @@ function endBattle(win,reason){
 function createBattle(cfg){
  unitSeq=0;
  B={t:0,rng:mulberry32(hashStr(cfg.seedStr||cfg.title)),units:[],events:[],log:['战斗开始！'],focus:null,autoUlt:S.settings.autoUlt,speed:S.settings.speed||1,paused:false,over:false,result:null,
-    kind:cfg.kind,ref:cfg.ref,title:cfg.title,parTime:cfg.parTime||45000,onEnd:cfg.onEnd,bossKey:cfg.bossKey||null,ui:!!cfg.ui,relics:cfg.relics||null};
+    kind:cfg.kind,ref:cfg.ref,dunType:cfg.dunType,dunDiff:cfg.dunDiff,title:cfg.title,parTime:cfg.parTime||45000,onEnd:cfg.onEnd,bossKey:cfg.bossKey||null,ui:!!cfg.ui,relics:cfg.relics||null};
  B.units=buildHeroUnits();
  if(cfg.hpMap){ // 迷雾远征：生命继承，倒下者本场不可战
   B.units=B.units.filter(u=>cfg.hpMap[u.hid]==null||cfg.hpMap[u.hid]>0);
@@ -1396,8 +1439,8 @@ window.__simTest=function(g){const st={kind:'stage',ref:stageId(g),title:stageId
 /* ============================================================
    界面层
    ============================================================ */
-let V={name:'city',param:null};
-function go(name,param){V={name:name,param:param==null?null:param};sfx.click();render();$('#view').scrollTop=0;}
+let V={name:'city',param:null}, formationReturn=null;
+function go(name,param){if(name==='formation'&&V.name==='prebattle')formationReturn=V.param;else if(name!=='formation')formationReturn=null;V={name:name,param:param==null?null:param};sfx.click();render();$('#view').scrollTop=0;}
 function renderTop(){
  const mailDot=S.mail.some(m=>m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length)||S.mail.some(m=>m.state==='unread');
  const signDot=S.signin.last!==gameDay();
@@ -1538,6 +1581,7 @@ function vFormation(){
  const placed=S.formation.filter(Boolean);
  const hasTank=placed.some(id=>HEROES[id].role==='坦克'),hasHeal=placed.some(id=>HEROES[id].role==='治疗');
  return '<div class="page"><h2 class="ptitle">'+ICONS.sword+' 编队</h2>'
+ +(formationReturn!=null?'<button class="btn green formreturn" onclick="go(\'prebattle\','+formationReturn+')">← 完成编队，返回战前</button>':'')
  +'<div class="formstage"><div style="text-align:center;font-weight:900;color:#ffe9b0">前排（承受伤害）</div><div class="formrow">'+slotHtml(0)+slotHtml(1)+'</div><div style="text-align:center;font-weight:900;color:#ffe9b0">后排（输出与辅助）</div><div class="formrow">'+slotHtml(2)+slotHtml(3)+slotHtml(4)+'</div>'
  +'<div style="text-align:center" class="mut">战力 '+fmt(teamPower())+' · 可拖拽英雄到位置换人，也可点击位置再点英雄'+(formSel.slot!=null&&S.formation[formSel.slot]?' · <a href="javascript:void(0)" style="color:#ffd977" onclick="formRemove()">将所选位置英雄下阵</a>':'')+'</div></div>'
  +((!hasTank||!hasHeal)?'<div class="panel" style="border-color:var(--red)"><b>阵容提示</b><div class="mut">'+(!hasTank?'当前阵容没有坦克，前排会很脆。':'')+(!hasHeal?' 当前阵容没有治疗，续航不足。':'')+'（仅提示，不强制）</div></div>':'')
@@ -2016,9 +2060,10 @@ function settleBattle(res){
 }
 function retryBattle(){const cfg=B.cfg;closeModal();closeBattle();setTimeout(()=>openBattle(cfg),60);}
 /* ---------------- 战斗界面 ---------------- */
-let battleTimer=null,unitEls={};
-const POS={e:[[38,36],[64,36],[22,13],[50,11],[78,13]],h:[[36,64],[64,64],[22,83],[50,85],[78,83]]};
+let battleTimer=null,battleLastTime=null,battleAccumulator=0,battleSettleTimer=null,unitEls={};
+const POS={e:[[38,38],[64,38],[22,18],[50,16],[78,18]],h:[[36,60],[64,60],[22,82],[50,82],[78,82]]};
 function openBattle(cfg){
+ if(B&&!B.over)return;
  if(!S.formation.some(Boolean)){toast('阵容为空，先去编队上阵英雄');go('formation');return;}
  createBattle(Object.assign({},cfg,{ui:true}));
  B.cfg=cfg;B.speed=S.settings.speed||1;B.autoUlt=S.settings.autoUlt;
@@ -2034,8 +2079,9 @@ function openBattle(cfg){
  B.units.forEach(u=>addUnitEl(u));
  buildUltBar();
  blog('点击敌方单位可设置集火标记。');
- clearInterval(battleTimer);
- battleTimer=setInterval(battleFrame,50);
+ cancelAnimationFrame(battleTimer);clearTimeout(battleSettleTimer);
+ battleLastTime=performance.now();battleAccumulator=0;
+ battleTimer=requestAnimationFrame(battleFrame);
  document.addEventListener('visibilitychange',visPause);
 }
 function visPause(){if(document.hidden&&B&&!B.over){B.paused=true;const p=$('#bpause');if(p)p.textContent='继续';}}
@@ -2063,9 +2109,9 @@ function manualUlt(uid){
 }
 function cycleSpeed(){B.speed=B.speed>=3?1:B.speed+1;$('#bspd').textContent=B.speed+'×';sfx.click();}
 function toggleAutoUlt(){B.autoUlt=!B.autoUlt;$('#bauto').classList.toggle('on',B.autoUlt);sfx.click();}
-function togglePause(){if(!B||B.over)return;B.paused=!B.paused;$('#bpause').textContent=B.paused?'继续':'暂停';sfx.click();}
+function togglePause(){if(!B||B.over)return;B.paused=!B.paused;battleLastTime=performance.now();battleAccumulator=0;$('#bpause').textContent=B.paused?'继续':'暂停';sfx.click();}
 function retreatBattle(){if(!B)return;B._wasPaused=B.paused;B.paused=true;openModal('<h3>确认撤退？</h3><p class="mut">撤退不会获得任何奖励，战斗进度不保存。（弹窗期间战斗已暂停）</p><div class="btnrow"><button class="btn red" onclick="closeModal();closeBattle();render()">确认撤退</button><button class="btn ghost" onclick="closeModal();if(B)B.paused=B._wasPaused">继续战斗</button></div>');}
-function closeBattle(){clearInterval(battleTimer);battleTimer=null;document.removeEventListener('visibilitychange',visPause);$('#battlewrap').classList.remove('open');$('#battlewrap').innerHTML='';B=null;unitEls={};}
+function closeBattle(){cancelAnimationFrame(battleTimer);clearTimeout(battleSettleTimer);battleTimer=null;battleLastTime=null;battleAccumulator=0;document.removeEventListener('visibilitychange',visPause);$('#battlewrap').classList.remove('open');$('#battlewrap').innerHTML='';B=null;unitEls={};}
 function blog(msg){const l=$('#blog');if(!l)return;const d=document.createElement('div');d.textContent='› '+msg;l.appendChild(d);while(l.children.length>30)l.firstChild.remove();l.scrollTop=l.scrollHeight;}
 function floater(u,txt,cls){
  const f=$('#bfield'),el=unitEls[u.uid];if(!f||!el)return;
@@ -2117,9 +2163,14 @@ function consumeEvents(){
  while(B.log.length){const m=B.log.shift();blog(m);}
  refreshFocus();
 }
-function battleFrame(){
+function battleFrame(now){
  if(!B)return;
- if(!B.paused&&!B.over){const steps=B.speed;for(let i=0;i<steps;i++)simStep();}
+ const elapsed=Math.max(0,Math.min(250,now-(battleLastTime==null?now:battleLastTime)));
+ battleLastTime=now;
+ if(!B.paused&&!B.over){
+  battleAccumulator+=elapsed*B.speed;
+  while(battleAccumulator>=100&&!B.over){battleAccumulator-=100;simStep();}
+ }else battleAccumulator=0;
  consumeEvents();
  // 更新单位状态
  B.units.forEach(u=>{const el=unitEls[u.uid];if(!el)return;
@@ -2151,7 +2202,8 @@ function battleFrame(){
   if(ub){ub.querySelector('.enwrap i').style.width=u.energy+'%';ub.classList.toggle('ready',u.alive&&u.energy>=100);ub.disabled=!u.alive;}
  });
  const tm=$('#btimer');if(tm)tm.textContent=Math.max(0,90-Math.floor(B.t/1000));
- if(B.over&&!B.settled){B.settled=true;clearInterval(battleTimer);setTimeout(()=>settleBattle(B.result),650);}
+ if(B.over&&!B.settled){B.settled=true;const completed=B;battleSettleTimer=setTimeout(()=>{if(B===completed)settleBattle(completed.result);},650);}
+ if(!B.over)battleTimer=requestAnimationFrame(battleFrame);
 }
 /* ---------------- 招募 ---------------- */
 function vSummon(){
@@ -2443,3 +2495,4 @@ $('#importfile').addEventListener('change',e=>{
 })();</script>
 </body>
 </html>
+
