@@ -346,9 +346,9 @@ const fmt=n=>{n=Math.floor(n);return n>=10000?(n/10000).toFixed(n>=100000?0:1).r
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 function toast(msg,ms){const t=$('#toast');t.innerHTML=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),ms||1900);}
-function openModal(html){$('#modalbox').innerHTML=html;$('#modalwrap').classList.add('open');}
-function closeModal(){$('#modalwrap').classList.remove('open');}
-$('#modalwrap').addEventListener('click',e=>{if(e.target.id==='modalwrap')closeModal();});
+function openModal(html){if(saveBusy)return;$('#modalbox').innerHTML=html;$('#modalwrap').classList.add('open');}
+function closeModal(){if(saveBusy)return;$('#modalwrap').classList.remove('open');}
+$('#modalwrap').addEventListener('click',e=>{if(e.target.id==='modalwrap'&&!saveBusy)closeModal();});
 /* ---------------- 音效（WebAudio 合成，无外部音频文件） ---------------- */
 let AC=null;
 function beep(f,d,type,g,slide){if(!window.S||!S.settings.sfx)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();const o=AC.createOscillator(),v=AC.createGain();o.type=type||'sine';o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),AC.currentTime+d);v.gain.setValueAtTime(g||0.08,AC.currentTime);v.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.connect(v).connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
@@ -748,44 +748,196 @@ function defaultState(){
   exp:{active:false,node:0,hp:{},relics:[],supply:0,gains:{gold:0,exp:0,book:0},equips:[],nodeDone:{},eventStep:0,relicChoices:[],pendingRelic:false,done:false}
  };
 }
-let S=null, saveTimer=null;
-function dbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(DBNAME,1);r.onupgradeneeded=()=>{r.result.createObjectStore(STORE);};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
-async function saveNow(){
- if(!S)return false;
- clearTimeout(saveTimer);
- let db;
- try{
-  const snapshot=JSON.parse(JSON.stringify(S));db=await dbOpen();
-  await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('存档事务中止'));tx.objectStore(STORE).put(snapshot,'main');});
-  return true;
- }catch(e){toast('自动保存失败，请到设置导出存档备份',4500);return false;}
- finally{if(db)db.close();}
+// Persistence is serialized. Replacements only publish in-memory state after commit.
+let S=null,saveTimer=null,saveQueue=Promise.resolve(),saveBusy=false,saveBlocked=false,saveIssue=null;
+const SAVE_IMPORT_LIMIT=5*1024*1024;
+let saveValidationTemplate=null;
+function validationTemplate(){if(!saveValidationTemplate){const seq=uidSeq;saveValidationTemplate=defaultState();uidSeq=seq;}return saveValidationTemplate;}
+function dbOpen(){return new Promise((resolve,reject)=>{
+ const r=indexedDB.open(DBNAME,1);
+ r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE);};
+ r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+});}
+function saveClone(value){return JSON.parse(JSON.stringify(value));}
+function saveObject(value){return value!==null&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));}
+function mergeSaveDefaults(base,value){
+ if(!saveObject(base)||!saveObject(value))return saveClone(value);
+ const result=saveClone(base);
+ for(const key of Object.keys(value))result[key]=saveObject(value[key])&&saveObject(base[key])?mergeSaveDefaults(base[key],value[key]):saveClone(value[key]);
+ return result;
 }
+function migrate(st){
+ if(!st||st.schemaVersion!==SCHEMA)return null;
+ const result=mergeSaveDefaults(defaultState(),st);
+ // A collection of owned heroes must never gain the default starter heroes.
+ result.heroes=saveClone(st.heroes);
+ return result;
+}
+function validateSave(st){
+ try{
+  const fail=message=>{throw new Error(message);};
+  const num=(v,label,min=0,max=Number.MAX_SAFE_INTEGER,integer=true)=>{if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max||(integer&&!Number.isSafeInteger(v)))fail(label+'数值异常');};
+  const text=(v,label)=>{if(typeof v!=='string'||v.length>10000||/[<>]/.test(v))fail(label+'文字格式异常');};
+  const object=(v,label)=>{if(!saveObject(v))fail(label+'必须是对象');};
+  const array=(v,label)=>{if(!Array.isArray(v))fail(label+'必须是数组');};
+  const bool=(v,label)=>{if(typeof v!=='boolean')fail(label+'必须是布尔值');};
+  const id=(v,label)=>{if(typeof v!=='string'||!/^[a-zA-Z0-9_-]{1,120}$/.test(v))fail(label+'标识异常');};
+  const day=(v,label)=>{if(typeof v!=='string'||(v!==''&&(!/^\d{4}-\d{2}-\d{2}$/.test(v)||!Number.isFinite(Date.parse(v))||new Date(v).toISOString().slice(0,10)!==v)))fail(label+'日期异常');};
+  let nodes=0;const seen=new WeakSet();
+  function safe(v,depth=0){
+   if(++nodes>200000||depth>40)fail('存档结构过大或嵌套过深');
+   if(v===null||typeof v==='boolean')return;
+   if(typeof v==='string'){text(v,'存档');return;}
+   if(typeof v==='number'){if(!Number.isFinite(v)||Math.abs(v)>Number.MAX_SAFE_INTEGER)fail('存档含无效数值');return;}
+   if(typeof v!=='object'||(!Array.isArray(v)&&!saveObject(v))||seen.has(v))fail('存档结构异常');
+   seen.add(v);
+   for(const key of Object.keys(v)){if(['__proto__','prototype','constructor'].includes(key))fail('存档含不安全字段');safe(v[key],depth+1);}
+   seen.delete(v);
+  }
+  safe(st);object(st,'存档');
+  if(st.schemaVersion!==SCHEMA)fail('存档版本不兼容，原档将被保留');
+  const required=['playerId','res','heroes','frags','equips','formation','presets','presetNames','stages','chapterClaimed','tower','towerClaimed','dungeon','counters','daily','questClaimed','signin','mail','pity','idle','storySeen','tutDone','lastDay'];
+  for(const key of required)if(!Object.hasOwn(st,key))fail('存档缺少必要字段：'+key);
+  // Check present fields against the current shape; optional added fields are filled by migration.
+  function shape(v,t,label){
+   if(t===null)return;
+   if(Array.isArray(t)){array(v,label);return;}
+   if(saveObject(t)){object(v,label);for(const key of Object.keys(t))if(Object.hasOwn(v,key))shape(v[key],t[key],label+'.'+key);return;}
+   if(typeof t==='number')num(v,label,0,Number.MAX_SAFE_INTEGER,false);
+   if(typeof t==='boolean')bool(v,label);
+   if(typeof t==='string')text(v,label);
+  }
+  const template=validationTemplate();shape(st,template,'存档');id(st.playerId,'玩家');
+  const counts=(v,label,max=Number.MAX_SAFE_INTEGER)=>{object(v,label);for(const [key,n]of Object.entries(v)){if(!/^[a-zA-Z0-9_-]+$/.test(key))fail(label+'键名异常');num(n,label,0,max);}};
+  const flags=(v,label,allowed)=>{object(v,label);for(const [key,b]of Object.entries(v)){if(allowed&&!allowed.includes(key))fail(label+'含未知条目');bool(b,label);}};
+  const resources=(v,label)=>{object(v,label);for(const [k,n]of Object.entries(v)){if(!Object.hasOwn(template.res,k))fail(label+'含未知资源');num(n,label+'.'+k);}};
+  resources(st.res,'资源');for(const k of ['gold','exp','dia','ticket','book','stone'])if(!Object.hasOwn(st.res,k))fail('资源缺少 '+k);
+  object(st.heroes,'英雄');if(!Object.keys(st.heroes).length)fail('存档缺少英雄');
+  for(const [hid,h]of Object.entries(st.heroes)){
+   if(!Object.hasOwn(HEROES,hid))fail('存档含未知英雄');object(h,'英雄');
+   num(h.lv,'英雄等级',1,60);num(h.star,'英雄星级',1,5);object(h.sk,'英雄技能');object(h.spent,'养成投入');bool(h.isNew,'英雄新标记');
+   for(const k of ['active','ult','passive'])num(h.sk[k],'技能等级',1,10);
+   for(const k of ['gold','exp','book'])num(h.spent[k],'养成投入');
+  }
+  counts(st.frags,'碎片');for(const k of Object.keys(st.frags))if(!Object.hasOwn(HEROES,k))fail('存档含未知碎片');
+  const form=(v)=>{array(v,'编队');if(v.length!==5)fail('编队必须有五个位置');const ids=v.filter(x=>x!==null);if(ids.some(h=>typeof h!=='string'||!Object.hasOwn(st.heroes,h))||new Set(ids).size!==ids.length)fail('编队含未拥有或重复英雄');};
+  form(st.formation);array(st.presets,'预设');if(st.presets.length!==3)fail('预设数量异常');st.presets.forEach(p=>{if(p!==null)form(p);});
+  array(st.presetNames,'预设名称');if(st.presetNames.length!==3)fail('预设名称数量异常');st.presetNames.forEach(n=>text(n,'预设名称'));
+  const uids=new Set(),worn=new Set(),statKeys=['hp','atk','armor','mres','spd','crit','healPct','resist','atkPct'];
+  function equip(e,set,checkWorn){
+   object(e,'装备');id(e.uid,'装备');if(set.has(e.uid))fail('装备实例重复');set.add(e.uid);
+   if(typeof e.slot!=='string'||!Object.hasOwn(SLOTS,e.slot)||!QUALS.includes(e.qual))fail('装备部位或品质异常');
+   text(e.name,'装备名称');num(e.lv,'装备强化',0,10);bool(e.locked,'装备锁定');object(e.stats,'装备属性');
+   if(e.hero!==null&&(!Object.hasOwn(st.heroes,e.hero)||typeof e.hero!=='string'))fail('装备归属异常');
+   if(checkWorn&&e.hero){const key=e.hero+':'+e.slot;if(worn.has(key))fail('同英雄同部位重复装备');worn.add(key);}
+   for(const [k,v]of Object.entries(e.stats)){if(!statKeys.includes(k))fail('装备属性未知');num(v,'装备属性',0,Number.MAX_SAFE_INTEGER,false);}
+  }
+  array(st.equips,'装备');st.equips.forEach(e=>equip(e,uids,true));
+  object(st.stages,'关卡');for(const [key,n]of Object.entries(st.stages)){if(!/^[1-4]-(?:[1-9]|10)$/.test(key))fail('关卡未知');num(n,'关卡星级',1,3);}
+  flags(st.chapterClaimed,'章节奖励',Array.from({length:4},(_,i)=>[10,20,30].map(n=>(i+1)+'_'+n)).flat());
+  num(st.tower,'试炼塔',0,30);flags(st.towerClaimed,'试炼塔奖励');
+  object(st.dungeon,'副本');day(st.dungeon.date,'副本');for(const k of ['gold','exp','book'])num(st.dungeon.used?.[k],'副本次数',0,3);
+  object(st.dungeon.best,'副本记录');for(const [k,v]of Object.entries(st.dungeon.best)){if(!/^(gold|exp|book)_[1-5]$/.test(k))fail('副本记录未知');num(v,'副本星级',0,3);}
+  counts(st.counters,'计数器');counts(st.daily.counters,'每日计数器');day(st.daily.date,'每日');
+  flags(st.daily.claimed,'每日任务',QUESTS.filter(q=>q.daily).map(q=>q.id));flags(st.daily.chests,'活跃奖励',['0','1','2','3','4']);flags(st.questClaimed,'任务',QUESTS.filter(q=>!q.daily).map(q=>q.id));
+  day(st.signin.last,'签到');num(st.signin.days,'签到次数');day(st.lastDay,'游戏日');
+  flags(st.storySeen,'剧情',Object.keys(STORY));bool(st.tutDone,'引导');
+  num(st.pity.sinceSSR,'SSR保底',0,49);num(st.pity.group,'十抽保底',0,9);bool(st.pity.groupSR,'十抽保底标记');
+  num(st.idle.lastCalc,'挂机时间',0,8640000000000000);num(st.idle.pendMin,'挂机分钟',0,480,false);
+  for(const k of ['fracG','fracE'])num(st.idle[k],'挂机余数',0,1,false);num(st.idle.equipMin,'挂机装备分钟',0,60,false);
+  if(st.settings){if(st.settings.speed!==undefined&&![1,2,3].includes(st.settings.speed))fail('战斗倍速异常');}
+  const mailIds=new Set();for(const m of st.mail){object(m,'邮件');id(m.id,'邮件');if(mailIds.has(m.id))fail('邮件标识重复');mailIds.add(m.id);text(m.title,'邮件标题');text(m.body,'邮件内容');if(!['unread','read','claimed'].includes(m.state))fail('邮件状态异常');num(m.ts,'邮件时间',0,8640000000000000);if(m.atts)resources(m.atts,'邮件奖励');}
+  if(st.skins){for(const k of ['owned','worn'])if(st.skins[k])flags(st.skins[k],'外观',Object.keys(SKINS));for(const [k,v]of Object.entries(st.skins.worn||{}))if(v&&!st.skins.owned?.[k])fail('穿戴了未拥有外观');}
+  if(st.season){if(st.season.cleared)for(const [k,v]of Object.entries(st.season.cleared)){if(!SEASON_STAGES.some(s=>s.id===k))fail('活动关卡未知');num(v,'活动星级',1,3);}if(st.season.shopBought)for(const [k,v]of Object.entries(st.season.shopBought)){const it=SEASON_SHOP.find(s=>s.id===k);if(!it)fail('兑换商品未知');num(v,'兑换次数',0,it.limit);}}
+  if(st.arena){
+   const a=st.arena;for(const k of ['score','wins','losses'])if(a[k]!==undefined)num(a[k],'竞技场');if(a.left!==undefined)num(a.left,'竞技场次数',0,5);
+   for(const k of ['day','firstWinDay'])if(a[k]!==undefined)day(a[k],'竞技场');
+   if(a.hist){if(a.hist.length>20)fail('战绩记录过多');for(const h of a.hist){object(h,'战绩');day(h.day,'战绩');text(h.tier,'战绩档位');bool(h.win,'战绩胜负');num(h.secs,'战绩时间',0,90);num(h.delta,'战绩积分',-Number.MAX_SAFE_INTEGER);}}
+  }
+  if(st.exp){
+   const e=st.exp;const relicIds=RELICS.map(r=>r.id);
+   if(e.active)for(const k of ['node','hp','relics','supply','gains','equips','nodeDone','eventStep','relicChoices','pendingRelic','done'])if(!Object.hasOwn(e,k))fail('进行中的远征缺少必要进度');
+   if(e.active&&Object.keys(e.hp||{}).length===0)fail('进行中的远征缺少队伍生命记录');
+   if(e.pendingRelic&&(!Array.isArray(e.relicChoices)||!e.relicChoices.length))fail('待选遗物记录缺失');
+   if(e.node!==undefined)num(e.node,'远征节点',0,EXP_NODES.length-1);if(e.eventStep!==undefined)num(e.eventStep,'远征事件',0,2);if(e.supply!==undefined)num(e.supply,'远征补给');
+   if(e.hp)for(const [k,v]of Object.entries(e.hp)){if(!Object.hasOwn(st.heroes,k))fail('远征生命英雄未知');num(v,'远征生命',0,1,false);}
+   for(const k of ['relics','relicChoices'])if(e[k]){if(new Set(e[k]).size!==e[k].length||e[k].some(r=>!relicIds.includes(r)))fail('远征遗物异常');}
+   if(e.gains)resources(e.gains,'远征收益');if(e.nodeDone)flags(e.nodeDone,'远征节点记录');
+   if(e.equips){const ids=new Set();e.equips.forEach(eq=>{equip(eq,ids,false);if(e.active&&uids.has(eq.uid))fail('远征待结算装备已入背包');});}
+  }
+  if(st.shop){
+   const sh=st.shop;for(const k of ['wallet','totalCharged'])if(sh[k]!==undefined)num(sh[k],'模拟钱包');if(sh.walletDay!==undefined)day(sh.walletDay,'钱包');
+   for(const k of ['firstBought','cumClaimed'])if(sh[k])flags(sh[k],'商城领取记录');
+   if(sh.packBought)counts(sh.packBought,'礼包次数');
+   for(const c of Object.values(sh.cards||{})){object(c,'卡片');if(c.until!==undefined)num(c.until,'卡片到期',0,8640000000000000);if(c.lastClaim!==undefined)day(c.lastClaim,'卡片领取');}
+   if(sh.fund?.claimed)flags(sh.fund.claimed,'基金领取');if(sh.pass){if(sh.pass.xp!==undefined)num(sh.pass.xp,'战令经验');for(const k of ['claimedFree','claimedPrem'])if(sh.pass[k])flags(sh.pass[k],'战令领取');}
+   if(sh.ledger)for(const row of sh.ledger){object(row,'钱包流水');num(row.ts,'流水时间',0,8640000000000000);text(row.txt,'流水');num(row.amt,'流水额度',-Number.MAX_SAFE_INTEGER);}
+  }
+  return null;
+ }catch(e){return e.message||'存档格式不正确';}
+}
+function prepareSave(raw){
+ const error=validateSave(raw);if(error)throw new Error(error);
+ const candidate=migrate(raw),mergedError=validateSave(candidate);
+ if(mergedError)throw new Error(mergedError);return candidate;
+}
+async function readSaveSlot(key){
+ const db=await dbOpen();
+ try{return await new Promise((resolve,reject)=>{
+  const tx=db.transaction(STORE),rq=tx.objectStore(STORE).get(key);let value;
+  rq.onsuccess=()=>{value=rq.result;};tx.oncomplete=()=>resolve({exists:value!==undefined,value});
+  tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('读取中止'));
+ });}finally{db.close();}
+}
+function loadSave(){return readSaveSlot('main');}
+function enqueueSave(snapshot,extra){
+ const operation=saveQueue.then(async()=>{
+  const db=await dbOpen();
+  try{await new Promise((resolve,reject)=>{
+   const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE);
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('写入中止'));
+   // Backup and main must either both commit or both remain unchanged.
+   try{if(extra)store.put(extra.value,extra.key);store.put(snapshot,'main');}catch(e){tx.abort();reject(e);}
+  });return true;}finally{db.close();}
+ });
+ saveQueue=operation.catch(()=>{});return operation;
+}
+async function saveNow(){
+ if(!S||saveBusy||saveBlocked)return false;clearTimeout(saveTimer);
+ try{const error=validateSave(S);if(error)throw new Error(error);await enqueueSave(saveClone(S));return true;}
+ catch(e){toast('自动保存失败，请到设置导出存档备份',4500);return false;}
+}
+function save(){clearTimeout(saveTimer);if(!saveBusy&&!saveBlocked)saveTimer=setTimeout(saveNow,250);}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&S)saveNow();});
 window.addEventListener('pagehide',()=>{if(S)saveNow();});
-function save(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250);}
-async function loadSave(){try{const db=await dbOpen();return await new Promise(res=>{const rq=db.transaction(STORE).objectStore(STORE).get('main');rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);});}catch(e){return null;}}
-function migrate(st){if(!st||st.schemaVersion!==SCHEMA)return null;const d=defaultState();const merged=Object.assign(d,st);merged.res=Object.assign(d.res,st.res||{});merged.settings=Object.assign(d.settings,st.settings||{});merged.daily=Object.assign(d.daily,st.daily||{});merged.shop=Object.assign(d.shop,st.shop||{});merged.shop.cards=Object.assign(d.shop.cards,(st.shop||{}).cards||{});merged.shop.fund=Object.assign(d.shop.fund,(st.shop||{}).fund||{});merged.shop.pass=Object.assign(d.shop.pass,(st.shop||{}).pass||{});merged.skins=Object.assign(d.skins,st.skins||{});merged.skins.owned=Object.assign({},(st.skins||{}).owned||{});merged.skins.worn=Object.assign({},(st.skins||{}).worn||{});merged.season=Object.assign(d.season,st.season||{});merged.season.cleared=Object.assign({},(st.season||{}).cleared||{});merged.season.shopBought=Object.assign({},(st.season||{}).shopBought||{});merged.arena=Object.assign(d.arena,st.arena||{});merged.arena.hist=Array.isArray((st.arena||{}).hist)?(st.arena||{}).hist.slice(0,20):[];return merged;}
-function validateSave(st){
- if(!st||typeof st!=='object')return '存档格式不正确';
- if(st.schemaVersion!==SCHEMA)return '存档版本不兼容';
- for(const k of['gold','exp','dia','ticket','book','stone'])if(!(st.res&&st.res[k]>=0))return '资源数据异常';
- for(const id in st.heroes||{})if(!HEROES[id])return '存档含未知英雄';
- if(st.res&&(st.res.stardust<0||st.res.skinTicket<0))return '资源数据异常';
- for(const id in ((st.skins||{}).owned||{}))if(!SKINS[id])return '存档含未知外观';
- for(const id in ((st.skins||{}).worn||{}))if(!SKINS[id])return '存档含未知外观';
- if(st.arena&&(!(st.arena.score>=0)||!(st.arena.left>=0&&st.arena.left<=5)))return '竞技场数据异常';
- const uids=new Set();for(const e of st.equips||[]){if(uids.has(e.uid))return '装备实例重复';uids.add(e.uid);}
- return null;
+function setSaveBusy(value){
+ saveBusy=value;$('#stage').inert=value;$('#battlewrap').inert=value;
+ $$('#modalbox button').forEach(button=>button.disabled=value);
+ const status=$('#save-operation-status');if(status)status.textContent=value?'正在保存，请稍候…':'';
 }
+async function replaceSave(raw,reason){
+ if(saveBusy)return false;
+ if(B){toast('请先结束战斗，再导入、恢复或重置存档');return false;}
+ if(saveBlocked&&!saveIssue?.hasRaw){toast('尚未成功读取原档，请先重试读取');return false;}
+ let candidate,previous;
+ try{candidate=prepareSave(raw);previous=S?prepareSave(S):null;dailyReset(candidate);const error=validateSave(candidate);if(error)throw new Error(error);}catch(e){toast('操作取消：'+e.message,4000);return false;}
+ setSaveBusy(true);clearTimeout(saveTimer);
+ try{
+  const extra=previous?{key:'backup',value:{savedAt:Date.now(),reason,state:previous}}:saveIssue?.hasRaw?{key:'rejected',value:{savedAt:Date.now(),reason,raw:saveIssue.raw}}:null;
+  await enqueueSave(candidate,extra);
+  S=candidate;saveBlocked=false;saveIssue=null;uidSeq=1000+S.equips.length*7+Object.keys(S.heroes).length;
+  $('#nav').style.display='';setSaveBusy(false);closeModal();go('city');music(S.settings.music);return true;
+ }catch(e){setSaveBusy(false);toast('保存未完成，当前进度和原有备份均未更改，请重试',4500);return false;}
+}
+
 /* ---------------- 日期（游戏日 Asia/Shanghai） ---------------- */
 function gameDay(){return new Date(Date.now()+8*3600*1000).toISOString().slice(0,10);}
-function dailyReset(){
- const d=gameDay();if(S.lastDay===d)return;
- S.lastDay=d;S.daily={date:d,counters:{},claimed:{},chests:{}};
- S.dungeon.date=d;S.dungeon.used={gold:0,exp:0,book:0};
- if(S.arena&&S.arena.day!==d){S.arena.day=d;S.arena.left=5;}
- S.counters.logins=(S.counters.logins||0)+1;
+function dailyReset(state=S){
+ const d=gameDay();if(state.lastDay===d)return;
+ state.lastDay=d;state.daily={date:d,counters:{},claimed:{},chests:{}};
+ state.dungeon.date=d;state.dungeon.used={gold:0,exp:0,book:0};
+ if(state.arena&&state.arena.day!==d){state.arena.day=d;state.arena.left=5;}
+ state.counters.logins=(state.counters.logins||0)+1;
 }
 /* ---------------- 属性计算 ---------------- */
 function heroStats(id){
@@ -836,7 +988,7 @@ function unclaimedIdle(){const p=idlePending();return p.gold>=15||p.exp>=6;}
 function highestStageIdx(){let s=0;for(let g=0;g<40;g++)if(S.stages[stageId(g)])s=g+1;return s;}
 function idleRates(){const s=highestStageIdx();return {g:15+2*s,e:6+2*s};}
 function idlePending(){
- const now=Date.now();let mins=S.idle.pendMin+(now-S.idle.lastCalc)/60000;
+ const now=Date.now();let mins=S.idle.pendMin+Math.max(0,now-S.idle.lastCalc)/60000;
  mins=Math.min(mins,480);const r=idleRates();
  const gF=mins*r.g+S.idle.fracG, eF=mins*r.e+S.idle.fracE;
  return {mins:mins,gold:Math.floor(gF),exp:Math.floor(eF),fracG:gF-Math.floor(gF),fracE:eF-Math.floor(eF),rates:r};
@@ -1440,7 +1592,7 @@ window.__simTest=function(g){const st={kind:'stage',ref:stageId(g),title:stageId
    界面层
    ============================================================ */
 let V={name:'city',param:null}, formationReturn=null;
-function go(name,param){if(name==='formation'&&V.name==='prebattle')formationReturn=V.param;else if(name!=='formation')formationReturn=null;V={name:name,param:param==null?null:param};sfx.click();render();$('#view').scrollTop=0;}
+function go(name,param){if(saveBusy||!S)return;if(name==='formation'&&V.name==='prebattle')formationReturn=V.param;else if(name!=='formation')formationReturn=null;V={name:name,param:param==null?null:param};sfx.click();render();$('#view').scrollTop=0;}
 function renderTop(){
  const mailDot=S.mail.some(m=>m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length)||S.mail.some(m=>m.state==='unread');
  const signDot=S.signin.last!==gameDay();
@@ -1459,7 +1611,7 @@ function render(){renderTop();renderNav();
  const v=$('#view');
  const fn={city:vCity,heroes:vHeroes,hero:vHero,formation:vFormation,adventure:vAdventure,bestiary:vBestiary,map:vMap,prebattle:vPrebattle,tower:vTower,dungeons:vDungeons,summon:vSummon,bag:vBag,quests:vQuests,mail:vMail,settings:vSettings,expedition:vExpedition,docs:vDocs,shop:vShop,season:vSeason,arena:vArena}[V.name]||vCity;
  v.innerHTML=fn(V.param);
- if(V.name==='city'&&!S.storySeen.intro){S.storySeen.intro=true;save();setTimeout(()=>showStory('intro'),350);}
+ if(V.name==='city'&&!S.storySeen.intro){const state=S;setTimeout(()=>{if(S===state&&V.name==='city'&&!S.storySeen.intro&&!saveBusy&&!saveBlocked&&!$('#modalwrap').classList.contains('open')){S.storySeen.intro=true;save();showStory('intro');}},350);}
 }
 /* ---------------- 主城 ---------------- */
 function nextObjective(){
@@ -1711,7 +1863,7 @@ function vPrebattle(g){
  const ens=stageEnemies(g),rew=stageReward(g);
  const tip=boss?BOSSES['B'+ch].tip:(g%10===4?'精英关：敌方属性大幅提升，注意保留大招。':CHAPTERS[ch-1].name+'的战斗，留意阵营克制：森芽 → 潮汐 → 熔炉 → 星灯 → 森芽。');
  const eHtml=ens.map(e=>{const d=e.eid==='BOSS'?BOSSES['B'+ch]:ENEMIES[e.eid];return '<div style="text-align:center;width:64px"><div class="mini62" style="height:62px;display:flex;align-items:flex-end;justify-content:center">'+(e.eid==='BOSS'?enemyArt('B'+ch):enemyArt(e.eid))+'</div><div style="font-size:11px;font-weight:800">'+d.name+(e.mod==='elite'?'·精英':e.mod==='strong'?'·强化':'')+'</div><div class="mut" style="font-size:10.5px">Lv'+e.lv+' '+(e.pos<2?'前排':'后排')+'</div></div>';}).join('');
- setTimeout(()=>{if(boss&&!S.storySeen['boss'+ch]){S.storySeen['boss'+ch]=true;save();showStory('boss'+ch);}},60);
+ if(boss){const state=S;setTimeout(()=>{if(S===state&&V.name==='prebattle'&&V.param===g&&!S.storySeen['boss'+ch]&&!saveBusy&&!saveBlocked&&!$('#modalwrap').classList.contains('open')){S.storySeen['boss'+ch]=true;save();showStory('boss'+ch);}},60);}
  return '<div class="page"><button class="backbtn" onclick="mapCh='+ch+';go(\'map\')">← 关卡地图</button>'
  +'<div class="panel" style="margin-top:10px"><b style="font-size:17px">'+id+' '+STAGE_NAMES[g]+'</b> '+(boss?'<span class="tag" style="background:#b0432f">Boss 战</span>':'')+'<div class="mut">推荐等级 '+REC_LV[g]+' · 三星条件：通关 + 45 秒内 + 全员存活 · 主线不消耗体力</div>'
  +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px">'+eHtml+'</div>'
@@ -2063,6 +2215,7 @@ function retryBattle(){const cfg=B.cfg;closeModal();closeBattle();setTimeout(()=
 let battleTimer=null,battleLastTime=null,battleAccumulator=0,battleSettleTimer=null,unitEls={};
 const POS={e:[[38,38],[64,38],[22,18],[50,16],[78,18]],h:[[36,60],[64,60],[22,82],[50,82],[78,82]]};
 function openBattle(cfg){
+ if(saveBusy||saveBlocked||!S)return;
  if(B&&!B.over)return;
  if(!S.formation.some(Boolean)){toast('阵容为空，先去编队上阵英雄');go('formation');return;}
  createBattle(Object.assign({},cfg,{ui:true}));
@@ -2454,7 +2607,7 @@ function vSettings(){
  +'<div class="switchrow"><span>默认战斗倍速</span><span><button class="btn sm '+(S.settings.speed===1?'':'ghost')+'" onclick="S.settings.speed=1;save();render()">1×</button> <button class="btn sm '+(S.settings.speed===2?'':'ghost')+'" onclick="S.settings.speed=2;save();render()">2×</button> <button class="btn sm '+(S.settings.speed===3?'':'ghost')+'" onclick="S.settings.speed=3;save();render()">3×</button></span></div>'
  +'</div>'
  +'<div class="panel"><b>存档（本机 IndexedDB 自动保存）</b><div class="mut" style="margin:6px 0">玩家 ID：'+S.playerId+' · 存档版本 schema '+SCHEMA+' · 关键操作后自动保存，刷新自动恢复；初始资源只发放一次。也可以导出 JSON 备份、跨设备导入。</div>'
- +'<div class="btnrow"><button class="btn blue" onclick="exportSave()">导出存档</button><button class="btn" onclick="document.getElementById(\'importfile\').click()">导入存档</button><button class="btn red" onclick="resetGame()">重置游戏</button></div></div>'
+ +'<div class="btnrow"><button class="btn blue" onclick="exportSave()">导出存档</button><button class="btn" onclick="document.getElementById(\'importfile\').click()">导入存档</button><button class="btn ghost" onclick="showSaveBackup()">恢复上次备份</button><button class="btn red" onclick="resetGame()">重置游戏</button></div><div class="mut" style="margin-top:8px">成功导入、重置或恢复前，自动保留一份可恢复备份；本机备份不能替代导出文件。</div><button class="btn sm ghost" style="margin-top:8px" onclick="exportRejectedSave()">导出保留的异常原档</button></div>'
  +'<div class="panel"><b>'+ICONS.book+' 开发文档（任务书 §37 等价页）</b><div class="mut" style="margin:6px 0">玩法说明、美术规范摘要、素材清单状态、数值说明、存档结构说明、测试报告与开发进度（完成 / 未完 / 下一步），内容与当前实现保持一致。</div><div class="btnrow"><button class="btn blue" onclick="go(\'docs\')">打开文档与进度</button></div></div>'
  +'<div class="panel"><b>'+ICONS.book+' 剧情回看</b><div class="btnrow" style="margin-top:8px">'+Object.keys(STORY).filter(k=>k.indexOf('personal_')!==0).map(k=>'<button class="btn sm ghost" onclick="showStory(\''+k+'\')">'+STORY[k].title+'</button>').join('')+'</div>'
  +'<div class="mut" style="margin:10px 0 4px">个人剧情（12/12）：招募获得该英雄后解锁，可在此重看，也可在英雄详情「伙伴档案」中打开；未获得的英雄会标注解锁条件。</div><div class="btnrow">'+HERO_IDS.map(id=>S.heroes[id]?'<button class="btn sm ghost" onclick="showStory(\'personal_'+id+'\')">'+STORY['personal_'+id].title+'</button>':'<span class="btn sm ghost" style="opacity:.55;pointer-events:none">'+HEROES[id].name+' · 个人剧情（获得后解锁）</span>').join('')+'</div>'
@@ -2466,33 +2619,71 @@ function vSettings(){
 }
 function toggleSet(k){S.settings[k]=!S.settings[k];save();sfx.click();render();}
 function toggleMusic(){S.settings.music=!S.settings.music;music(S.settings.music);save();render();}
-function exportSave(){
- saveNow().then(()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gulu-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('存档已导出');});
-}
-function resetGame(){openModal('<h3>重置游戏？</h3><p class="mut">将清空当前进度并重新开始（初始资源会重新发放）。此操作不可恢复，建议先导出存档备份。</p><div class="btnrow"><button class="btn red" onclick="doResetGame()">确认重置</button><button class="btn ghost" onclick="closeModal()">取消</button></div>');}
-function doResetGame(){S=defaultState();uidSeq=S.equips.length+1;saveNow();closeModal();go('city');toast('已重置，新的远征开始！');}
 function debugRes(){S.res.gold+=10000;S.res.exp+=10000;S.res.dia+=100;S.res.book+=20;S.res.stone+=30;save();renderTop();render();toast('调试资源已发放');}
 function debugHeroes(){HERO_IDS.forEach(id=>{if(!S.heroes[id])S.heroes[id]={lv:1,star:1,sk:{active:1,ult:1,passive:1},spent:{gold:0,exp:0,book:0},isNew:true};});save();render();toast('已解锁全部英雄');}
 function debugIdle(){S.idle.pendMin=480;S.idle.lastCalc=Date.now();save();toast('挂机时间已快进 8 小时，去主城领取');}
 function debugStage(){for(let g=0;g<40;g++)if(!S.stages[stageId(g)])S.stages[stageId(g)]=1;save();render();toast('已解锁全部主线');}
-$('#importfile').addEventListener('change',e=>{
- const f=e.target.files[0];if(!f)return;
- const r=new FileReader();r.onload=()=>{try{const st=JSON.parse(r.result);const err=validateSave(st);
-  if(err){toast('导入失败：'+err);return;}
-  openModal('<h3>导入存档？</h3><p class="mut">将用导入的存档覆盖当前进度（导入前已自动保存当前存档到本机）。</p><div class="btnrow"><button class="btn red" id="doimport">确认导入</button><button class="btn ghost" onclick="closeModal()">取消</button></div>');
-  $('#doimport').onclick=()=>{S=migrate(st);dailyReset();saveNow();closeModal();go('city');toast('导入成功');};
- }catch(err){toast('导入失败：文件不是有效的存档 JSON');}};
- r.readAsText(f);e.target.value='';
+function downloadSave(value,filename){
+ const blob=new Blob([JSON.stringify(value,null,1)],{type:'application/json'}),url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function exportSave(){
+ if(saveBusy)return;
+ try{if(S)downloadSave(saveClone(S),'gulu-save.json');else if(saveIssue?.hasRaw)downloadSave(saveIssue.raw,'gulu-original-unreadable-save.json');else{toast('尚未读取到可导出的原档');return;}toast('已导出存档文件');}
+ catch(e){toast('导出失败，请保留此页面并重试');}
+}
+async function exportRejectedSave(){
+ if(saveBusy)return;
+ try{const archived=await readSaveSlot('rejected');if(!archived.exists){toast('没有保留的异常原档');return;}downloadSave(archived.value.raw,'gulu-preserved-original-save.json');toast('已导出保留的原档');}
+ catch(e){toast('暂时无法导出保留的原档，请重试');}
+}
+async function showSaveBackup(){
+ if(saveBusy)return;
+ try{
+  const slot=await readSaveSlot('backup');
+  if(saveBusy)return;
+  if(!slot.exists){toast('暂无本机备份；成功导入或重置前会自动保留当前进度',4000);return;}
+  const backup=slot.value,candidate=prepareSave(backup?.state);
+  const when=typeof backup.savedAt==='number'?new Date(backup.savedAt).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}):'未知时间';
+  openModal('<h3>恢复上次备份？</h3><p class="mut">备份时间（游戏时间）：<span id="backup-time"></span>。恢复会替换当前进度，当前可用进度会保留为下一份备份。</p><p id="save-operation-status" class="mut" role="status" aria-live="polite"></p><div class="btnrow"><button class="btn blue" id="exportbackup">导出这份备份</button><button class="btn" id="restorebackup">确认恢复</button><button class="btn ghost" onclick="closeModal()">取消</button></div>');
+  $('#backup-time').textContent=when;
+  $('#exportbackup').onclick=()=>downloadSave(candidate,'gulu-backup-save.json');
+  $('#restorebackup').onclick=async()=>{if(await replaceSave(candidate,'restore'))toast('备份已恢复');};
+ }catch(e){toast('备份暂时无法恢复，原档保持不变',4000);}
+}
+function resetGame(){
+ if(saveBusy)return;
+ openModal('<h3>重置游戏？</h3><p class="mut">将重新开始新的远征。当前可用存档会自动保留，可在设置中恢复；建议也导出一份文件备份。若原档损坏，会先保留原始数据。</p><p id="save-operation-status" class="mut" role="status" aria-live="polite"></p><div class="btnrow"><button class="btn red" onclick="doResetGame()">确认重置</button><button class="btn ghost" onclick="closeModal()">取消</button></div>');
+}
+async function doResetGame(){if(await replaceSave(defaultState(),'reset'))toast('已重置，原有进度已保留');}
+function showSaveRecovery(message){
+ clearTimeout(saveTimer);saveBlocked=true;S=null;
+ $('#topbar').innerHTML='<b>存档需要恢复</b>';$('#nav').style.display='none';
+ $('#view').innerHTML='<div class="page"><div class="panel"><h2>进度暂未载入</h2><p id="save-recovery-reason" class="mut"></p><p class="mut">原存档保留在本机，自动保存已暂停。可以导出原档、恢复备份，或导入一份已知可用的存档。</p><div class="btnrow"><button class="btn blue" onclick="exportSave()">导出原档</button><button class="btn" onclick="showSaveBackup()">恢复备份</button><button class="btn" onclick="document.getElementById(\'importfile\').click()">导入存档</button><button class="btn ghost" onclick="location.reload()">重试读取</button><button class="btn red" onclick="resetGame()">重新开始</button></div></div></div>';
+ $('#save-recovery-reason').textContent=message;
+}
+$('#importfile').addEventListener('change',async e=>{
+ const file=e.target.files[0];e.target.value='';if(!file||saveBusy)return;
+ if(file.size>SAVE_IMPORT_LIMIT){toast('导入失败：存档文件超过 5 MB');return;}
+ try{
+  const candidate=prepareSave(JSON.parse(await file.text()));
+  if(saveBusy)return;
+  if(B){toast('请先结束战斗，再导入存档');return;}
+  openModal('<h3>导入存档？</h3><p class="mut">确认后将替换当前进度。当前可用进度会与导入存档一起保存为可恢复备份；任何一步失败都不会覆盖原档。</p><p id="save-operation-status" class="mut" role="status" aria-live="polite"></p><div class="btnrow"><button class="btn" id="doimport">确认导入</button><button class="btn ghost" onclick="closeModal()">取消</button></div>');
+  $('#doimport').onclick=async()=>{if(await replaceSave(candidate,'import'))toast('导入成功，原有进度已保留');};
+ }catch(e){toast('导入失败：'+(e instanceof SyntaxError?'文件不是有效的存档 JSON':e.message),4500);}
 });
-/* ---------------- 启动 ---------------- */
+/* ---------------- 启动：区分空存档、读取失败和损坏存档 ---------------- */
 (async function boot(){
- const loaded=await loadSave();
- S=migrate(loaded)||defaultState();
+ let loaded;
+ try{loaded=await loadSave();}
+ catch(e){saveIssue={hasRaw:false};showSaveRecovery('暂时无法读取本机存档，请重试读取。');return;}
+ try{S=loaded.exists?prepareSave(loaded.value):defaultState();}
+ catch(e){saveIssue={hasRaw:true,raw:loaded.value};showSaveRecovery(e.message);return;}
  uidSeq=1000+S.equips.length*7+Object.keys(S.heroes).length;
- dailyReset();save();
- render();
- if(S.settings.music)music(true);
-})();</script>
+ dailyReset();save();render();if(S.settings.music)music(true);
+})();
+</script>
 </body>
 </html>
 
