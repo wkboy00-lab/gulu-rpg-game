@@ -290,6 +290,129 @@ input[type=text],input[type=number],select,textarea{background:#fffdf4;border:2p
 .mini58 svg{height:52px;width:auto;}
 .mini62 svg{height:62px;width:auto;}
 .mini44 svg{height:44px;width:auto;}
+/* ============================================================
+   预览版新增：主城场景层级 / 底部面板 / 统一领奖演出
+   ============================================================ */
+/* --- 按压反馈（约100ms）与触控目标 --- */
+.entry,.herocard,.pick,.stagerow,.tier{transition:transform .1s ease;}
+.entry:active,.herocard:active,.pick:active,.stagerow:active,.tier:active{transform:scale(.965);}
+.iconbtn{min-width:44px;height:44px;}
+#nav button{min-height:56px;}
+#nav button:active .ni{transform:scale(.85);}
+#nav button .ni{transition:transform .1s ease;}
+.hotspot{min-height:44px;}
+.res span.bump{animation:resbump .55s ease;}
+@keyframes resbump{0%{box-shadow:0 0 0 0 rgba(255,210,60,0)}25%{background:#8a5f14;box-shadow:0 0 12px 3px rgba(255,210,60,.9)}100%{}}
+.res span .rn{font-weight:800;}
+/* --- 主城场景（持续场景为主体） --- */
+.citypage{padding:0 0 14px;}
+.scene{position:relative;height:clamp(452px,calc(100dvh - 150px),618px);overflow:hidden;background:#223039;}
+.scene .scenebg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 60%;}
+.scene .scenefade{position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(180deg,transparent,rgba(16,22,18,.55));pointer-events:none;}
+.glow{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,196,80,.5) 0%,rgba(255,196,80,0) 65%);animation:glowpulse 3.6s ease-in-out infinite alternate;}
+@keyframes glowpulse{from{opacity:.45;transform:scale(.92)}to{opacity:.95;transform:scale(1.08)}}
+.flag{position:absolute;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));}
+.flag svg{display:block;animation:flagwave 2.8s ease-in-out infinite alternate;transform-origin:0 0;}
+@keyframes flagwave{from{transform:skewY(-2.5deg)}to{transform:skewY(3.5deg)}}
+.questribbon{position:absolute;top:64px;left:10px;right:10px;z-index:6;display:flex;align-items:center;gap:8px;
+  background:linear-gradient(180deg,rgba(46,28,8,.88),rgba(30,18,5,.88));border:2px solid var(--brass);border-radius:13px;padding:7px 8px 7px 11px;color:#ffe9b0;box-shadow:0 4px 12px rgba(0,0,0,.45);}
+.questribbon .qt{flex:1;min-width:0;font-size:13px;font-weight:800;line-height:1.35;}
+.questribbon .qt small{display:block;color:#d9b96a;font-size:11px;font-weight:700;}
+.questribbon .btn{min-height:44px;flex:none;}
+.bchip{position:absolute;transform:translate(-50%,-50%);z-index:5;display:flex;flex-direction:column;align-items:center;gap:1px;
+  background:rgba(28,17,5,.78);border:2px solid var(--brass);color:#ffe9b0;border-radius:14px;padding:6px 9px 5px;font-weight:900;font-size:12.5px;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.5);min-width:70px;min-height:52px;transition:transform .1s ease;}
+.bchip .bi{font-size:18px;line-height:1.1;}
+.bchip small{font-size:9.5px;color:#d9b96a;font-weight:700;white-space:nowrap;}
+.bchip:active{transform:translate(-50%,-50%) scale(.93);}
+.bchip .dot{top:-3px;right:-3px;}
+.standees{position:absolute;left:0;right:0;bottom:96px;height:64px;display:flex;justify-content:center;align-items:flex-end;gap:2px;pointer-events:none;z-index:3;}
+.standee{height:60px;display:flex;align-items:flex-end;animation:bob 2.6s ease-in-out infinite alternate;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));}
+.standee img{height:60px;width:60px;object-fit:contain;}
+.standee svg{height:60px;width:auto;}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-4px)}}
+.idlechest{position:absolute;right:10px;bottom:100px;z-index:6;display:flex;flex-direction:column;align-items:center;gap:0;
+  background:linear-gradient(180deg,#a8742a,#7c4b12);border:2.5px solid #ffd977;color:#fff3d0;border-radius:14px;padding:7px 10px 6px;cursor:pointer;box-shadow:0 5px 14px rgba(0,0,0,.55);min-width:76px;min-height:58px;transition:transform .1s ease;}
+.idlechest:active{transform:scale(.93);}
+.idlechest .ct{font-size:11px;font-weight:900;}
+.idlechest .ca{font-size:12.5px;font-weight:900;color:#ffe9a8;white-space:nowrap;}
+.idlechest.ready{animation:chestpulse 1.1s ease-in-out infinite alternate;}
+@keyframes chestpulse{from{box-shadow:0 5px 14px rgba(0,0,0,.55),0 0 0 rgba(255,210,60,0)}to{box-shadow:0 5px 14px rgba(0,0,0,.55),0 0 18px 4px rgba(255,210,60,.75)}}
+.teamdock{position:absolute;left:8px;right:8px;bottom:8px;z-index:6;display:flex;align-items:center;gap:8px;
+  background:linear-gradient(180deg,rgba(43,29,12,.92),rgba(28,18,6,.94));border:2px solid var(--brass);border-radius:14px;padding:7px 9px;color:#ffe9b0;box-shadow:0 5px 14px rgba(0,0,0,.5);}
+.teamdock .tm{display:flex;gap:3px;}
+.teamdock .tm .td1{width:38px;text-align:center;}
+.teamdock .tm img{width:36px;height:36px;object-fit:cover;border-radius:9px;border:1.5px solid rgba(215,163,74,.8);display:block;}
+.teamdock .tm svg{height:36px;width:auto;}
+.teamdock .tm small{display:block;font-size:9.5px;font-weight:800;color:#e8d9ae;margin-top:1px;white-space:nowrap;}
+.teamdock .tp{flex:1;min-width:0;}
+.teamdock .tp b{font-size:13px;color:#ffd977;white-space:nowrap;}
+.teamdock .tp div{font-size:11px;color:#d9c391;font-weight:700;white-space:nowrap;}
+@media(max-width:430px){
+  .idlechest{bottom:140px;}
+  .standees{bottom:134px;}
+  .teamdock{flex-wrap:wrap;row-gap:6px;}
+  .teamdock .tm .td1{width:33px;}
+  .teamdock .tm img{width:31px;height:31px;}
+  .teamdock .tp{flex:1 1 96px;}
+  .teamdock .btn{margin-left:auto;}
+  .teamdock .btn + .btn{margin-left:0;}
+}
+/* 设施图标行（替代旧大卡片） */
+.facilityrow{display:flex;gap:8px;}
+.facility{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:linear-gradient(180deg,var(--card),var(--paper));border:2.5px solid var(--brass);border-radius:12px;padding:9px 4px 7px;cursor:pointer;position:relative;color:var(--ink);transition:transform .1s ease;min-height:64px;justify-content:center;}
+.facility:active{transform:scale(.95);}
+.facility .fi{font-size:21px;line-height:1.1;}
+.facility b{font-size:13px;}
+.facility span{font-size:10.5px;color:var(--ink2);font-weight:700;text-align:center;}
+.facility .dot{top:-6px;right:-4px;}
+.teamdock .btn{min-height:44px;padding:8px 10px;font-size:12.5px;flex:none;}
+.citybelow{padding:12px 12px 0;}
+.citybelow h3{margin:0 2px 9px;color:#ffe9b0;font-size:15px;text-shadow:0 2px 0 rgba(0,0,0,.45);}
+/* --- 底部面板（统一自下而上打开） --- */
+#sheetwrap{position:fixed;inset:0;z-index:280;background:rgba(8,5,2,.6);opacity:0;pointer-events:none;transition:opacity .2s ease;}
+#sheetwrap.open{opacity:1;pointer-events:auto;}
+.sheet{position:absolute;left:50%;bottom:0;width:100%;max-width:460px;transform:translate(-50%,105%);transition:transform .24s cubic-bezier(.32,.9,.35,1);
+  background:linear-gradient(180deg,var(--card),var(--paper));border:3.5px solid var(--brass);border-bottom:none;border-radius:18px 18px 0 0;
+  box-shadow:0 -8px 34px rgba(0,0,0,.55), inset 0 0 0 2px #fff8e6;padding:14px 14px calc(14px + env(safe-area-inset-bottom));max-height:86dvh;overflow-y:auto;}
+#sheetwrap.open .sheet{transform:translate(-50%,0);}
+.sheet h3{margin:0 0 8px;font-size:17px;color:#6b3d05;display:flex;align-items:center;gap:7px;}
+.sheet .grab{width:44px;height:5px;border-radius:99px;background:rgba(101,69,46,.4);margin:0 auto 10px;}
+.modal{animation:sheetup .22s cubic-bezier(.32,.9,.35,1);}
+@keyframes sheetup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.idlemeter{height:13px;background:rgba(0,0,0,.16);border-radius:99px;overflow:hidden;border:1.5px solid rgba(101,69,46,.5);}
+.idlemeter i{display:block;height:100%;background:linear-gradient(90deg,#ffc95e,#f09c1d);transition:width .3s;}
+.idlebig{display:flex;gap:10px;margin:10px 0;}
+.idlebig div{flex:1;text-align:center;background:rgba(101,69,46,.1);border:1.5px solid rgba(101,69,46,.35);border-radius:11px;padding:8px 4px;}
+.idlebig b{display:block;font-size:19px;color:#7a4b06;}
+.idlebig span{font-size:11.5px;color:var(--ink2);font-weight:800;}
+/* --- 统一领奖演出 --- */
+#rewwrap{position:fixed;inset:0;z-index:320;background:rgba(8,5,2,.72);display:none;align-items:center;justify-content:center;padding:16px;}
+#rewwrap.open{display:flex;}
+.rewbox{width:100%;max-width:400px;background:linear-gradient(180deg,var(--card),var(--paper));border:3.5px solid var(--brass);border-radius:16px;
+  box-shadow:0 12px 44px rgba(0,0,0,.65), inset 0 0 0 2px #fff8e6;padding:16px;text-align:center;animation:sheetup .22s cubic-bezier(.32,.9,.35,1);}
+.rewbox h3{margin:0 0 4px;font-size:18px;color:#6b3d05;}
+.rewgrid{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin:13px 0 6px;}
+.rewitem{width:86px;border:2.5px solid #a5814e;border-radius:13px;background:rgba(255,255,255,.5);padding:9px 4px 7px;opacity:0;transform:scale(.6) translateY(12px);}
+.rewitem.pop{animation:rewpopp .3s cubic-bezier(.3,1.4,.5,1) forwards;}
+@keyframes rewpopp{from{opacity:0;transform:scale(.6) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.rewitem .ri{font-size:27px;line-height:1.15;min-height:32px;display:flex;align-items:center;justify-content:center;}
+.rewitem .ri svg{width:27px;height:27px;}
+.rewitem b{display:block;font-size:12.5px;margin-top:2px;}
+.rewitem .rn2{font-size:13px;font-weight:900;color:#7a4b06;}
+.rewitem.rare{border-color:var(--gold);background:linear-gradient(180deg,#fff3c4,#ffe49a);box-shadow:0 0 16px rgba(255,180,40,.75);}
+.rewitem.rare::after{content:"稀有";display:inline-block;margin-top:3px;background:var(--ssr);color:#fff;font-size:10px;font-weight:900;border-radius:99px;padding:1px 7px;}
+.rewitem.flydone{border-color:var(--green2);box-shadow:0 0 10px rgba(115,165,92,.6);}
+.flychip{position:fixed;z-index:500;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3d0,#e8b64c);border:2px solid #a8742a;
+  display:flex;align-items:center;justify-content:center;pointer-events:none;transform:translate(-50%,-50%);box-shadow:0 3px 8px rgba(0,0,0,.4);}
+.flychip svg{width:17px;height:17px;}
+#flylayer{position:fixed;inset:0;z-index:490;pointer-events:none;}
+@media (prefers-reduced-motion: reduce){
+  .standee,.glow,.flag svg,.idlechest.ready,.res span.bump{animation:none!important;}
+  .sheet,#sheetwrap,.modal,.rewbox{transition:none!important;animation:none!important;}
+  .rewitem{opacity:1;transform:none;}
+  .rewitem.pop{animation:none!important;}
+  .page{animation:none!important;}
+}
 </style>
 </head>
 <body>
@@ -300,6 +423,9 @@ input[type=text],input[type=number],select,textarea{background:#fffdf4;border:2p
 </div>
 <div id="battlewrap"></div>
 <div id="modalwrap"><div class="modal" id="modalbox"></div></div>
+<div id="sheetwrap"><div class="sheet" id="sheetbox" role="dialog" aria-modal="true"></div></div>
+<div id="rewwrap"><div class="rewbox" id="rewbox" role="dialog" aria-modal="true"></div></div>
+<div id="flylayer"></div>
 <div id="toast"></div>
 <input type="file" id="importfile" accept=".json,application/json" style="display:none">
 <script>
@@ -798,16 +924,153 @@ function idlePending(){
  const gF=mins*r.g+S.idle.fracG, eF=mins*r.e+S.idle.fracE;
  return {mins:mins,gold:Math.floor(gF),exp:Math.floor(eF),fracG:gF-Math.floor(gF),fracE:eF-Math.floor(eF),rates:r};
 }
-function claimIdle(){
- const p=idlePending();if(p.gold<1&&p.exp<1){toast('挂机收益还太少，再等一会儿');return;}
+function settleIdle(){
+ const p=idlePending();
  S.res.gold+=p.gold;S.res.exp+=p.exp;
  S.idle.fracG=p.fracG;S.idle.fracE=p.fracE;
  const totalMin=S.idle.equipMin+p.mins;const nEq=Math.floor(totalMin/60);
  S.idle.equipMin=totalMin-nEq*60;S.idle.pendMin=0;S.idle.lastCalc=Date.now();
- let eqTxt='';
- for(let i=0;i<nEq;i++){const slots=['weapon','armor','trinket','boots'];const q=Math.random()<0.45?'普通':(Math.random()<0.62?'优秀':(Math.random()<0.8?'稀有':'史诗'));const e=newEquip(slots[Math.floor(Math.random()*4)],q,1+highestStageIdx()*0.03);S.equips.push(e);}if(nEq)eqTxt=' 装备+'+nEq;
- bump('idleClaims');sfx.coin();save();renderTop();render();
- toast('领取挂机收益：金币 '+p.gold+' · 经验 '+p.exp+eqTxt,2400);
+ const equips=[];
+ for(let i=0;i<nEq;i++){const slots=['weapon','armor','trinket','boots'];const q=Math.random()<0.45?'普通':(Math.random()<0.62?'优秀':(Math.random()<0.8?'稀有':'史诗'));const e=newEquip(slots[Math.floor(Math.random()*4)],q,1+highestStageIdx()*0.03);S.equips.push(e);equips.push(e);}
+ bump('idleClaims');
+ return {gold:p.gold,exp:p.exp,equips:equips};
+}
+function claimIdle(){openIdle();} // 兼容旧入口：改为打开挂机面板
+/* ---------------- 底部面板（统一方向：自下而上） ---------------- */
+function openSheet(html){$('#sheetbox').innerHTML=html;$('#sheetwrap').classList.add('open');}
+function closeSheet(){$('#sheetwrap').classList.remove('open');}
+$('#sheetwrap').addEventListener('click',e=>{if(e.target.id==='sheetwrap')closeSheet();});
+/* ---------------- 挂机面板 ---------------- */
+function fmtDur(mins){const m=Math.floor(mins);return Math.floor(m/60)+' 小时 '+(''+(m%60)).padStart(2,'0')+' 分';}
+function idleSheetHTML(){
+ const p=idlePending();
+ const empty=p.gold<1&&p.exp<1, capped=p.mins>=479.5;
+ const totalMin=S.idle.equipMin+p.mins, nEq=Math.floor(totalMin/60), toNext=60-Math.floor(totalMin%60);
+ let state;
+ if(empty)state='<span class="tag" style="background:#8a6a45">暂无可领取收益</span> 探险队刚出发，收益正在累积中。';
+ else if(capped)state='<span class="tag" style="background:var(--red2)">已达 8 小时上限</span> 仓库塞满啦，领取后才会继续累积。';
+ else state='<span class="tag" style="background:var(--green2)">可领取</span> 探险队正在铃芽大陆各地收集物资。';
+ return '<div class="grab"></div><h3>'+ICONS.hourglass+' 挂机收益</h3>'
+ +'<div class="kv"><span>已挂机时长</span><b>'+fmtDur(p.mins)+' / 8 小时上限</b></div>'
+ +'<div class="idlemeter"><i style="width:'+Math.min(100,p.mins/480*100)+'%"></i></div>'
+ +'<div class="kv" style="margin-top:6px"><span>当前速率（随主线进度提升）</span><b>金币 '+p.rates.g+'/分 · 经验 '+p.rates.e+'/分</b></div>'
+ +'<div class="idlebig"><div><b>'+ICONS.coin+' '+p.gold+'</b><span>金币</span></div><div><b>'+ICONS.exp+' '+p.exp+'</b><span>经验</span></div></div>'
+ +'<div class="kv"><span>装备掉落</span><b>'+(nEq>0?('本次可掉 '+nEq+' 件装备'):'再挂机 '+toNext+' 分钟掉 1 件')+'</div>'
+ +'<p class="mut" style="margin:6px 0 10px">'+state+'</p>'
+ +'<div class="btnrow"><button class="btn green" id="idleclaim" style="flex:1" '+(empty?'disabled':'')+' onclick="doClaimIdle()">'+(empty?'暂无收益可领':'领取收益')+'</button><button class="btn ghost" onclick="closeSheet()">返回主城</button></div>';
+}
+function openIdle(){sfx.click();openSheet(idleSheetHTML());}
+setInterval(()=>{const el=$('#idleamt');if(el&&window.S){const p=idlePending();el.innerHTML=ICONS.coin+' '+p.gold+' · '+ICONS.exp+' '+p.exp;const ch=$('#idlechest');if(ch)ch.classList.toggle('ready',unclaimedIdle());}},20000);
+let idleBusy=false;
+async function doClaimIdle(){
+ if(idleBusy)return;
+ const p0=idlePending();if(p0.gold<1&&p0.exp<1){toast('挂机收益还太少，再等一会儿');return;}
+ idleBusy=true;
+ const btn=$('#idleclaim');if(btn){btn.disabled=true;btn.textContent='领取中…';}
+ const before=snapRes();
+ const got=settleIdle();           /* 先结算并落盘，动画只是表现 */
+ sfx.coin();saveNow();
+ const items=[];
+ if(got.gold)items.push({kind:'gold',n:got.gold});
+ if(got.exp)items.push({kind:'exp',n:got.exp});
+ got.equips.forEach(e=>items.push({kind:'equip',equip:e,rare:e.qual==='稀有'||e.qual==='史诗',n:1}));
+ presentRewards({title:'挂机收益',items:items,before:before,onDone:function(){
+   idleBusy=false;
+   if($('#sheetwrap').classList.contains('open'))$('#sheetbox').innerHTML=idleSheetHTML();
+   render();
+ }});
+}
+/* ---------------- 统一领奖演出 ----------------
+   约定：调用方先把奖励真正入账并存档，再把入账前的资源快照 before 传进来；
+   本组件只负责 物品错峰弹出 → 图标弧线飞向顶栏 → 数字滚动到账，绝不改账目。 */
+const RM=(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+function snapRes(){const o={};for(const k in S.res)o[k]=S.res[k];return o;}
+function rewToItems(rew){
+ const items=[];
+ for(const k in rew||{}){if(k==='frag'){for(const hid in rew.frag)items.push({kind:'frag',n:rew.frag[hid],label:HEROES[hid].name+'碎片',rare:true});}
+  else if(rew[k]>0)items.push({kind:k,n:rew[k],rare:k==='dia'||k==='ticket'||k==='skinTicket'});}
+ return items;
+}
+const RW={active:false,timers:[],finish:null};
+function rwLater(fn,ms){if(RM){fn();return;}RW.timers.push(setTimeout(fn,ms));}
+function presentRewards(opts){
+ if(RW.active&&RW.finish)RW.finish(true); // 已有演出时先瞬间结束旧的
+ const items=opts.items||[], before=opts.before||snapRes();
+ const grid=items.map((it,i)=>{
+   const icon=it.kind==='equip'?SLOTS[it.equip.slot].i:itemIcon(it.kind);
+   const name=it.kind==='equip'?(it.equip.name+' +'+it.equip.lv):(it.label||RESNAME[it.kind]||it.kind);
+   const sub=it.kind==='equip'?('<span class="qname-'+it.equip.qual+'">'+it.equip.qual+' · '+SLOTS[it.equip.slot].n+'</span>'):('<span class="rn2">×'+it.n+'</span>');
+   return '<div class="rewitem'+(it.rare?' rare':'')+'" data-kind="'+it.kind+'" style="animation-delay:'+(i*65)+'ms"><div class="ri">'+icon+'</div><b>'+name+'</b>'+sub+'</div>';
+ }).join('');
+ $('#rewbox').innerHTML='<h3>'+ICONS.crystal+' '+opts.title+'</h3><div class="mut">奖励已入账</div><div class="rewgrid">'+grid+'</div>'
+ +'<div class="btnrow" style="justify-content:center;margin-top:10px"><button class="btn ghost sm" id="rewskip">跳过演出</button><button class="btn green" id="rewok" disabled>领取完成</button></div>';
+ $('#rewwrap').classList.add('open');
+ RW.active=true;
+ const tiles=Array.from($$('#rewbox .rewitem'));
+ if(RM){tiles.forEach(t=>{t.style.opacity=1;t.style.transform='none';});}
+ else tiles.forEach(t=>t.classList.add('pop'));
+ let finished=false;
+ const finish=(instant)=>{
+   if(finished)return;finished=true;
+   RW.timers.forEach(clearTimeout);RW.timers=[];
+   $$('#flylayer .flychip').forEach(c=>c.remove());
+   resShown=null;renderTop();renderNav();
+   tiles.forEach(t=>{t.style.opacity=1;t.style.transform='none';});
+   const ok=$('#rewok'),sk=$('#rewskip');if(ok){ok.disabled=false;ok.textContent='完成';}if(sk)sk.style.display='none';
+   RW.active=false;RW.finish=null;
+   if(opts.onDone)opts.onDone();
+ };
+ RW.finish=finish;
+ $('#rewskip').onclick=()=>finish(true);
+ $('#rewok').onclick=()=>{$('#rewwrap').classList.remove('open');sfx.click();};
+ /* 飞向顶栏 + 数字滚动：仅演出，账目已定 */
+ const flyKinds=['gold','exp','dia','ticket'];
+ const targets=flyKinds.filter(k=>items.some(it=>it.kind===k));
+ const popWait=RM?0:Math.min(650,items.length*65+280);
+ rwLater(()=>{
+   if(finished)return;
+   if(!RM&&targets.length)sfx.coin();
+   targets.forEach((k,ki)=>{
+     const tile=tiles.find(t=>t.getAttribute('data-kind')===k);
+     const tgt=document.querySelector('#topbar .res span[data-res="'+k+'"]');
+     if(tile&&tgt&&!RM)flyArc(tile,k,tgt,ki);
+     if(tile)setTimeout(()=>tile.classList.add('flydone'),RM?0:300+ki*90);
+   });
+   countUpRes(before,RM?0:520);
+   rwLater(()=>finish(false),RM?60:860);
+ },popWait);
+}
+function flyArc(fromEl,kind,toEl,ki){
+ const a=fromEl.getBoundingClientRect(),b=toEl.getBoundingClientRect();
+ const sx=a.left+a.width/2,sy=a.top+a.height/2,tx=b.left+b.width/2,ty=b.top+b.height/2;
+ const cx=(sx+tx)/2,cy=Math.min(sy,ty)-110;
+ for(let i=0;i<3;i++){
+   const chip=document.createElement('div');chip.className='flychip';chip.innerHTML=itemIcon(kind);
+   $('#flylayer').appendChild(chip);
+   const t0=performance.now()+i*75+ki*90,dur=480;
+   const step=(now)=>{
+     let t=(now-t0)/dur;if(t<0){requestAnimationFrame(step);return;}
+     if(t>=1){chip.remove();return;}
+     const x=(1-t)*(1-t)*sx+2*(1-t)*t*cx+t*t*tx;
+     const y=(1-t)*(1-t)*sy+2*(1-t)*t*cy+t*t*ty;
+     chip.style.left=x+'px';chip.style.top=y+'px';chip.style.opacity=''+(t>0.82?(1-t)/0.18:1);
+     requestAnimationFrame(step);
+   };
+   requestAnimationFrame(step);
+ }
+}
+function countUpRes(before,dur){
+ const keys=['gold','exp','dia','ticket'].filter(k=>(S.res[k]||0)!==(before[k]||0));
+ if(!keys.length||!dur){return;}
+ resShown={};keys.forEach(k=>resShown[k]=before[k]||0);renderTop();
+ keys.forEach(k=>{const sp=document.querySelector('#topbar .res span[data-res="'+k+'"]');if(sp)sp.classList.add('bump');});
+ const t0=performance.now();
+ const step=(now)=>{
+   const t=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-t,3);
+   keys.forEach(k=>{const el=document.querySelector('#topbar .res span[data-res="'+k+'"] .rn');if(el)el.textContent=fmt((before[k]||0)+((S.res[k]||0)-(before[k]||0))*e);});
+   if(t<1&&resShown)requestAnimationFrame(step);
+ };
+ requestAnimationFrame(step);
 }
 /* ============================================================
    模拟充值中心（免费模拟 · 不涉及真实付费）
@@ -1397,12 +1660,15 @@ window.__simTest=function(g){const st={kind:'stage',ref:stageId(g),title:stageId
    界面层
    ============================================================ */
 let V={name:'city',param:null};
-function go(name,param){V={name:name,param:param==null?null:param};sfx.click();render();$('#view').scrollTop=0;}
+const viewScroll={}; let forceTopOnce=false;
+function go(name,param){viewScroll[V.name]=$('#view').scrollTop;V={name:name,param:param==null?null:param};sfx.click();forceTopOnce=(name!=='city');render();}
+let resShown=null; // 领奖演出期间顶栏数字的显示覆盖（真实账目已先行结算）
 function renderTop(){
  const mailDot=S.mail.some(m=>m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length)||S.mail.some(m=>m.state==='unread');
  const signDot=S.signin.last!==gameDay();
+ const rv=k=>fmt(resShown&&resShown[k]!=null?resShown[k]:S.res[k]);
  $('#topbar').innerHTML='<div class="ttl">咕噜远征团</div><div class="res">'
-  +'<span><i>'+ICONS.coin+'</i>'+fmt(S.res.gold)+'</span><span><i>'+ICONS.exp+'</i>'+fmt(S.res.exp)+'</span><span><i>'+ICONS.dia+'</i>'+fmt(S.res.dia)+'</span><span><i>'+ICONS.ticket+'</i>'+S.res.ticket+'</span><span><i>✦</i>'+(S.res.stardust||0)+'</span></div>'
+  +'<span data-res="gold"><i>'+ICONS.coin+'</i><b class="rn">'+rv('gold')+'</b></span><span data-res="exp"><i>'+ICONS.exp+'</i><b class="rn">'+rv('exp')+'</b></span><span data-res="dia"><i>'+ICONS.dia+'</i><b class="rn">'+rv('dia')+'</b></span><span data-res="ticket"><i>'+ICONS.ticket+'</i><b class="rn">'+rv('ticket')+'</b></span><span><i>✦</i>'+(S.res.stardust||0)+'</span></div>'
   +'<button class="iconbtn" onclick="go(\'mail\')" aria-label="邮件">'+ICONS.mail+(mailDot?'<span class="dot">!</span>':'')+'</button>'
   +'<button class="iconbtn" onclick="openSignin()" style="font-weight:900;font-size:15px">签'+(signDot?'<span class="dot">!</span>':'')+'</button>'
   +'<button class="iconbtn" onclick="go(\'settings\')" aria-label="设置">'+ICONS.gear+'</button>';
@@ -1413,39 +1679,55 @@ function renderNav(){
  $('#nav').innerHTML=items.map(([n,i,t])=>'<button class="'+(V.name===n||(n==='adventure'&&['map','tower','dungeons','prebattle','bestiary','expedition','season','arena'].includes(V.name))||(n==='heroes'&&['hero','formation'].includes(V.name))?'on':'')+'" onclick="go(\''+n+'\')"><span class="ni">'+i+'</span>'+t+(n==='heroes'&&heroNew?'<span class="dot">N</span>':'')+'</button>').join('');
 }
 function render(){renderTop();renderNav();
- const v=$('#view');
+ const v=$('#view'); const keepTop=v.scrollTop;
  const fn={city:vCity,heroes:vHeroes,hero:vHero,formation:vFormation,adventure:vAdventure,bestiary:vBestiary,map:vMap,prebattle:vPrebattle,tower:vTower,dungeons:vDungeons,summon:vSummon,bag:vBag,quests:vQuests,mail:vMail,settings:vSettings,expedition:vExpedition,docs:vDocs,shop:vShop,season:vSeason,arena:vArena}[V.name]||vCity;
  v.innerHTML=fn(V.param);
+ if(forceTopOnce){v.scrollTop=0;forceTopOnce=false;}
+ else if(V.name==='city'&&viewScroll.city!=null){v.scrollTop=viewScroll.city;}
+ else{v.scrollTop=keepTop;}
  if(V.name==='city'&&!S.storySeen.intro){S.storySeen.intro=true;save();setTimeout(()=>showStory('intro'),350);}
 }
 /* ---------------- 主城 ---------------- */
 function nextObjective(){
  if(!S.stages['1-1'])return {t:'打赢公会门外的史莱姆（1-1）',go:"go('prebattle',0)"};
  if(!S.counters.upgrades)return {t:'给任意英雄升 1 级，感受成长',go:"go('hero','taidun')"};
- if(!S.counters.idleClaims)return {t:'领取一次挂机收益',go:"claimIdle()"};
+ if(!S.counters.idleClaims)return {t:'领取一次挂机收益',go:"openIdle()"};
  if(S.counters.summons<1)return {t:'用招募券去酒馆招募一次',go:"go('summon')"};
  if(!S.stages['1-10'])return {t:'推进主线，挑战第一章 Boss 荆冠巨獾',go:"go('map')"};
  return {t:'自由远征：刷副本、爬塔、补三星',go:"go('adventure')"};
 }
+function flagSVG(color){return '<svg width="34" height="42" viewBox="0 0 34 42"><rect x="2" y="0" width="3.4" height="42" fill="#5a3a16"/><path d="M5.4 2 L31 7.5 L5.4 15 Z" fill="'+color+'"/></svg>';}
 function vCity(){
  const p=idlePending(),obj=nextObjective();
- const team=S.formation.filter(Boolean).map(id=>'<div class="mini58" style="text-align:center;width:58px"><div style="height:52px;display:flex;align-items:flex-end;justify-content:center">'+heroArt(id)+'</div><div style="font-size:11px;font-weight:800;color:#ffe9b0">Lv'+S.heroes[id].lv+' '+HEROES[id].name+'</div></div>').join('');
- return '<div class="page" style="padding-top:0">'
- +'<div class="citywrap"><img src="assets/city.webp" alt="咕噜冒险公会主城"><div class="guildname">咕噜冒险公会<div class="guildsub">铃芽大陆 · 寻找晨星炉心碎片</div></div>'
- +'<button class="hotspot" style="left:50%;top:56%" onclick="go(\'map\')">'+ICONS.castle+' 公会大厅 · 出征</button>'
- +'<button class="hotspot" style="left:19%;top:47%" onclick="go(\'summon\')">'+ICONS.mug+' 酒馆招募</button>'
- +'<button class="hotspot" style="left:82%;top:47%" onclick="go(\'bag\')">'+ICONS.sword+' 装备铺</button>'
- +'<button class="hotspot" style="left:20%;top:76%" onclick="go(\'quests\')">'+ICONS.book+' 任务板'+(questClaimable()?'<span class="dot">!</span>':'')+'</button>'
- +'<button class="hotspot" style="left:80%;top:76%" onclick="go(\'tower\')">'+ICONS.tower+' 试炼塔</button>'
- +'<div class="cityfade"></div></div>'
- +'<div class="panel objcard"><b>'+ICONS.target+' 当前目标</b><div class="objtext">'+obj.t+'</div><button class="btn" onclick="'+obj.go+'">前往</button></div>'
- +'<div class="panel entry" style="flex-direction:row;justify-content:space-between;text-align:left" onclick="go(\'shop\')"><div><b>'+ICONS.dia+' 充值中心（模拟）</b><div class="mut">模拟充值 · 不涉及真实付费'+(shopClaimable()?' · 有奖励可领取':'')+'</div></div><span class="cost">模拟钱包 '+S.shop.wallet+' 币</span>'+(shopClaimable()?'<span class="dot">!</span>':'')+'</div>'
- +'<div class="panel idlecard"><div style="font-size:30px;color:#a8742a">'+ICONS.hourglass+'</div><div style="flex:1"><b>挂机收益</b> <span class="mut">速率金币 '+p.rates.g+'/分 · 经验 '+p.rates.e+'/分（已累计 '+Math.floor(p.mins)+' 分钟 / 上限 8 小时）</span><div class="big">'+ICONS.coin+' '+p.gold+'　'+ICONS.exp+' '+p.exp+'</div></div><button class="btn green" onclick="claimIdle()">领取</button></div>'
- +'<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><b>'+ICONS.sword+' 远征小队</b><span class="cost">战力 '+fmt(teamPower())+'</span></div><div style="display:flex;gap:4px;justify-content:space-between;margin-top:6px;background:linear-gradient(180deg,#31424f,#223039);border-radius:10px;padding:8px 4px">'+team+'</div><div class="btnrow" style="margin-top:9px"><button class="btn sm blue" onclick="go(\'formation\')">调整阵容</button><button class="btn sm" onclick="go(\'map\')">开始冒险</button></div></div>'
- +'<div class="grid3">'
- +'<div class="panel entry" onclick="go(\'dungeons\')"><span class="ei">'+ICONS.coin+'</span><b>资源副本</b><span>金币·经验·技能书</span></div>'
- +'<div class="panel entry" onclick="openSignin()"><span class="ei">'+ICONS.calendar+'</span><b>七日签到</b><span>'+(S.signin.last===gameDay()?'今日已签到':'今日可签到')+'</span>'+(S.signin.last!==gameDay()?'<span class="dot">!</span>':'')+'</div>'
- +'<div class="panel entry" onclick="go(\'mail\')"><span class="ei">'+ICONS.mail+'</span><b>系统邮件</b><span>'+S.mail.filter(m=>m.state!=='claimed').length+' 封待处理</span></div>'
+ const ids=S.formation.filter(Boolean);
+ const standees=ids.map((id,i)=>'<div class="standee" style="animation-delay:'+(i*0.45)+'s">'+heroArt(id)+'</div>').join('');
+ const dockAv=ids.map(id=>'<div class="td1"><div style="height:36px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;border-radius:9px">'+heroArt(id)+'</div><small>Lv'+S.heroes[id].lv+'</small></div>').join('');
+ const idleReady=unclaimedIdle();
+ return '<div class="page citypage">'
+ +'<div class="scene"><img class="scenebg" src="assets/city.webp" alt="咕噜冒险公会主城">'
+ +'<div class="glow" style="left:5%;top:15%;width:132px;height:132px"></div>'
+ +'<div class="glow" style="right:3%;top:33%;width:104px;height:104px;animation-delay:1.3s"></div>'
+ +'<div class="flag" style="left:8%;top:12%">'+flagSVG('#d8503a')+'</div>'
+ +'<div class="flag" style="right:9%;top:10%"><div style="transform:scaleX(-1)">'+flagSVG('#3d86c2')+'</div></div>'
+ +'<div class="guildname">咕噜冒险公会<div class="guildsub">铃芽大陆 · 寻找晨星炉心碎片</div></div>'
+ +'<div class="questribbon"><div class="qt"><small>'+ICONS.target+' 当前目标</small>'+obj.t+'</div><button class="btn" onclick="'+obj.go+'">前往</button></div>'
+ +'<button class="bchip" style="left:50%;top:28%" onclick="go(\'map\')"><span class="bi">'+ICONS.castle+'</span>公会大厅<small>出征主线</small></button>'
+ +'<button class="bchip" style="left:15%;top:44%" onclick="go(\'summon\')"><span class="bi">'+ICONS.mug+'</span>酒馆<small>招募英雄</small></button>'
+ +'<button class="bchip" style="left:85%;top:44%" onclick="go(\'bag\')"><span class="bi">'+ICONS.sword+'</span>装备铺<small>背包装备</small></button>'
+ +'<button class="bchip" style="left:50%;top:47%" onclick="go(\'shop\')"><span class="bi">'+ICONS.dia+'</span>充值中心<small>免费模拟</small>'+(shopClaimable()?'<span class="dot">!</span>':'')+'</button>'
+ +'<button class="bchip" style="left:15%;top:62%" onclick="go(\'quests\')"><span class="bi">'+ICONS.book+'</span>任务板<small>日常与成长</small>'+(questClaimable()?'<span class="dot">!</span>':'')+'</button>'
+ +'<button class="bchip" style="left:85%;top:62%" onclick="go(\'tower\')"><span class="bi">'+ICONS.tower+'</span>试炼塔<small>30 层挑战</small></button>'
+ +'<div class="standees">'+standees+'</div>'
+ +'<button class="idlechest'+(idleReady?' ready':'')+'" id="idlechest" onclick="openIdle()"><span style="font-size:19px;line-height:1">'+ICONS.hourglass+'</span><span class="ct">挂机收益</span><span class="ca" id="idleamt">'+ICONS.coin+' '+p.gold+' · '+ICONS.exp+' '+p.exp+'</span>'+(idleReady?'<span class="dot">!</span>':'')+'</button>'
+ +'<div class="scenefade"></div>'
+ +'<div class="teamdock"><div class="tm">'+dockAv+'</div><div class="tp"><b>远征小队</b><div>战力 '+fmt(teamPower())+'</div></div><button class="btn sm blue" onclick="go(\'formation\')">编队</button><button class="btn sm" onclick="go(\'map\')">出征</button></div>'
+ +'</div>'
+ +'<div class="citybelow"><h3>公会设施</h3><div class="facilityrow">'
+ +'<div class="facility" onclick="go(\'dungeons\')"><span class="fi">'+ICONS.coin+'</span><b>资源副本</b><span>金币·经验·技能书</span></div>'
+ +'<div class="facility" onclick="openSignin()"><span class="fi">'+ICONS.calendar+'</span><b>七日签到</b><span>'+(S.signin.last===gameDay()?'今日已签到':'今日可签到')+'</span>'+(S.signin.last!==gameDay()?'<span class="dot">!</span>':'')+'</div>'
+ +'<div class="facility" onclick="go(\'mail\')"><span class="fi">'+ICONS.mail+'</span><b>系统邮件</b><span>'+S.mail.filter(m=>m.state!=='claimed').length+' 封待处理</span>'+(mailClaimable()?'<span class="dot">!</span>':'')+'</div>'
+ +'</div>'
+ +'<div class="panel entry" style="flex-direction:row;justify-content:space-between;text-align:left" onclick="go(\'shop\')"><div><b>'+ICONS.dia+' 充值中心（模拟）</b><div class="mut">模拟充值 · 免费模拟币 · 不涉及真实付费'+(shopClaimable()?' · 有奖励可领取':'')+'</div></div><span class="cost">模拟钱包 '+S.shop.wallet+' 币</span>'+(shopClaimable()?'<span class="dot">!</span>':'')+'</div>'
  +'</div></div>';
 }
 /* ---------------- 英雄 ---------------- */
@@ -2232,26 +2514,28 @@ function vQuests(){
  +'<div class="panel">'+(rows||'<div class="emptybox">暂无任务</div>')+'</div></div>';
 }
 function claimQuest(id){const q=QUESTS.find(x=>x.id===id);if(!q||isQuestClaimed(q)||questProgress(q)<q.target)return;
- addRes(q.rew);if(q.daily)S.daily.claimed[id]=true;else S.questClaimed[id]=true;passAddXp(15);sfx.coin();save();renderTop();render();toast('任务完成：'+rewText(q.rew));}
-function claimAllQuests(){let n=0;QUESTS.forEach(q=>{if(!isQuestClaimed(q)&&questProgress(q)>=q.target){addRes(q.rew);if(q.daily)S.daily.claimed[q.id]=true;else S.questClaimed[q.id]=true;n++;}});if(n){passAddXp(15*n);sfx.coin();save();renderTop();render();toast('领取了 '+n+' 个任务奖励');}else toast('暂无可领取的任务');}
+ const before=snapRes();addRes(q.rew);if(q.daily)S.daily.claimed[id]=true;else S.questClaimed[id]=true;passAddXp(15);sfx.coin();saveNow();presentRewards({title:'任务奖励 · '+q.name,items:rewToItems(q.rew),before:before,onDone:()=>render()});}
+function claimAllQuests(){const merged={};let n=0;QUESTS.forEach(q=>{if(!isQuestClaimed(q)&&questProgress(q)>=q.target){for(const k in q.rew){if(k==='frag'){merged.frag=merged.frag||{};for(const h in q.rew.frag)merged.frag[h]=(merged.frag[h]||0)+q.rew.frag[h];}else merged[k]=(merged[k]||0)+q.rew[k];}if(q.daily)S.daily.claimed[q.id]=true;else S.questClaimed[q.id]=true;n++;}});
+ if(n){const before=snapRes();addRes(merged);passAddXp(15*n);sfx.coin();saveNow();presentRewards({title:'任务奖励 ×'+n+'（合并领取）',items:rewToItems(merged),before:before,onDone:()=>render()});}else toast('暂无可领取的任务');}
 function claimChest(i){const c=ACTIVITY_CHESTS[i];const pts=QUESTS.filter(q=>q.daily&&S.daily.claimed[q.id]).reduce((a,q)=>a+(q.act||0),0);
- if(S.daily.chests[i]||pts<c.pts)return;S.daily.chests[i]=true;addRes(c.rew);passAddXp(10);sfx.coin();save();renderTop();render();toast('活跃宝箱：'+rewText(c.rew));}
+ if(S.daily.chests[i]||pts<c.pts)return;const before=snapRes();S.daily.chests[i]=true;addRes(c.rew);passAddXp(10);sfx.coin();saveNow();presentRewards({title:'活跃宝箱',items:rewToItems(c.rew),before:before,onDone:()=>render()});}
 function openSignin(){
  const today=gameDay(),can=S.signin.last!==today,idx=S.signin.days%7;
  const cells=SIGNIN.map((r,i)=>{const state=i<idx?'done':(i===idx&&can?'today':'todo');
   return '<div style="flex:1;min-width:64px;text-align:center;border:2.5px solid '+(state==='today'?'var(--gold)':state==='done'?'#73a55c':'#a5814e')+';border-radius:11px;padding:7px 3px;background:'+(state==='today'?'#ffedbe':'rgba(255,255,255,.4)')+'"><div style="font-size:19px">'+(state==='done'?'已领':'礼包')+'</div><b style="font-size:12px">第 '+(i+1)+' 天</b><div class="mut" style="font-size:11px">'+rewText(r)+'</div></div>';}).join('');
  openModal('<h3>'+ICONS.calendar+' 七日签到</h3><div style="display:flex;gap:6px;flex-wrap:wrap">'+cells+'</div><p class="mut">每个游戏日可签到一次（Asia/Shanghai），七日循环。已累计签到 '+S.signin.days+' 天。</p><div class="btnrow">'+(can?'<button class="btn green" style="flex:1" onclick="doSignin()">签到领奖</button>':'<button class="btn" disabled>今日已签到</button>')+'<button class="btn ghost" onclick="closeModal()">关闭</button></div>');
 }
-function doSignin(){if(S.signin.last===gameDay())return;const r=SIGNIN[S.signin.days%7];addRes(r);S.signin.last=gameDay();S.signin.days++;sfx.coin();save();renderTop();openSignin();toast('签到成功：'+rewText(r));}
+function doSignin(){if(S.signin.last===gameDay())return;const r=SIGNIN[S.signin.days%7];const before=snapRes();addRes(r);S.signin.last=gameDay();S.signin.days++;sfx.coin();saveNow();closeModal();presentRewards({title:'签到奖励 · 第 '+(S.signin.days%7===0?7:S.signin.days%7)+' 天',items:rewToItems(r),before:before,onDone:()=>render()});}
 function vMail(){
  const rows=S.mail.slice().reverse().map(m=>{const real=S.mail[S.mail.length-1-S.mail.slice().reverse().indexOf(m)];
   return '<div class="itemrow"><div class="itemicon">'+ICONS.mail+'</div><div style="flex:1"><b>'+m.title+'</b>'+(m.state==='unread'?' <span class="newtag" style="position:static">未读</span>':'')+'<div class="mut">'+m.body+'</div>'+(m.atts&&Object.keys(m.atts).length?'<div class="mut">附件：'+rewText(m.atts)+'</div>':'')+'</div>'
   +(m.state==='claimed'?'<span class="cost">已领取</span>':(m.atts&&Object.keys(m.atts).length?'<button class="btn sm green" onclick="claimMail(\''+m.id+'\')">领取附件</button>':'<button class="btn sm" onclick="readMail(\''+m.id+'\')">标为已读</button>'))+'</div>';}).join('');
  return '<div class="page"><h2 class="ptitle">'+ICONS.mail+' 系统邮件</h2><div class="panel">'+(rows||'<div class="emptybox">暂无邮件</div>')+'<div class="btnrow"><button class="btn sm" onclick="claimAllMail()">一键领取全部附件</button></div></div></div>';
 }
-function claimMail(id){const m=S.mail.find(x=>x.id===id);if(!m||m.state==='claimed')return;if(m.atts)addRes(m.atts);m.state='claimed';sfx.coin();save();renderTop();render();toast('附件已领取：'+rewText(m.atts||{}));}
+function claimMail(id){const m=S.mail.find(x=>x.id===id);if(!m||m.state==='claimed')return;const before=snapRes();if(m.atts)addRes(m.atts);m.state='claimed';sfx.coin();saveNow();presentRewards({title:'邮件附件 · '+m.title,items:rewToItems(m.atts||{}),before:before,onDone:()=>render()});}
 function readMail(id){const m=S.mail.find(x=>x.id===id);if(m&&m.state==='unread'){m.state='read';save();render();}}
-function claimAllMail(){let n=0;S.mail.forEach(m=>{if(m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length){addRes(m.atts);m.state='claimed';n++;}});if(n){sfx.coin();save();renderTop();render();toast('领取了 '+n+' 封邮件附件');}else toast('暂无可领取附件');}
+function claimAllMail(){const merged={};let n=0;S.mail.forEach(m=>{if(m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length){for(const k in m.atts){if(k==='frag'){merged.frag=merged.frag||{};for(const h in m.atts.frag)merged.frag[h]=(merged.frag[h]||0)+m.atts.frag[h];}else merged[k]=(merged[k]||0)+m.atts[k];}n++;}});
+ if(n){const before=snapRes();addRes(merged);S.mail.forEach(m=>{if(m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length)m.state='claimed';});sfx.coin();saveNow();presentRewards({title:'邮件附件 ×'+n+'（合并领取）',items:rewToItems(merged),before:before,onDone:()=>render()});}else toast('暂无可领取附件');}
 /* ---------------- 剧情 ---------------- */
 function showStory(key,idx){
  const st=STORY[key];if(!st)return;idx=idx||0;
