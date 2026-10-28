@@ -406,6 +406,33 @@ input[type=text],input[type=number],select,textarea{background:#fffdf4;border:2p
   display:flex;align-items:center;justify-content:center;pointer-events:none;transform:translate(-50%,-50%);box-shadow:0 3px 8px rgba(0,0,0,.4);}
 .flychip svg{width:17px;height:17px;}
 #flylayer{position:fixed;inset:0;z-index:490;pointer-events:none;}
+/* --- 本轮小屏返修（320/390）：顶栏资源完整显示、缎带不遮建筑入口、小队条按钮不落单 --- */
+.questribbon{top:66px;padding:6px 7px 6px 10px;}
+.questribbon .qt{font-size:12.5px;line-height:1.3;}
+@media(max-width:430px){
+  #topbar{flex-wrap:wrap;row-gap:5px;}
+  #topbar .ttl{display:block;font-size:12.5px;letter-spacing:0;}
+  #topbar .res{order:3;flex:1 1 100%;overflow:visible;justify-content:space-between;gap:4px;flex-wrap:nowrap;}
+  #topbar .res span{flex:1 1 0;justify-content:center;padding:2px 2px;font-size:11px;min-width:0;}
+  .teamdock{flex-wrap:nowrap;gap:5px;padding:6px 7px;}
+  .teamdock .tm{gap:2px;}
+  .teamdock .tm .td1{width:27px;}
+  .teamdock .tm img{width:25px;height:25px;}
+  .teamdock .tm small{font-size:8.5px;}
+  .teamdock .tp b{font-size:12px;}
+  .teamdock .tp div{display:none;}
+  .teamdock .btn{padding:7px 8px;font-size:12px;min-height:44px;}
+  .idlechest{bottom:118px;min-width:70px;padding:6px 8px 5px;}
+  .standees{bottom:112px;}
+  .bchip{min-width:62px;padding:5px 7px 4px;font-size:11.5px;}
+  .bchip small{font-size:9px;}
+  .questribbon .btn{padding:8px 10px;font-size:12.5px;}
+}
+@media(max-width:360px){
+  .teamdock .tm .td1{width:24px;}
+  .teamdock .tm img{width:22px;height:22px;}
+  .teamdock .tp{display:none;}
+}
 @media (prefers-reduced-motion: reduce){
   .standee,.glow,.flag svg,.idlechest.ready,.res span.bump{animation:none!important;}
   .sheet,#sheetwrap,.modal,.rewbox{transition:none!important;animation:none!important;}
@@ -446,7 +473,7 @@ function closeModal(){$('#modalwrap').classList.remove('open');}
 $('#modalwrap').addEventListener('click',e=>{if(e.target.id==='modalwrap')closeModal();});
 /* ---------------- 音效（WebAudio 合成，无外部音频文件） ---------------- */
 let AC=null;
-function beep(f,d,type,g,slide){if(!window.S||!S.settings.sfx)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();const o=AC.createOscillator(),v=AC.createGain();o.type=type||'sine';o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),AC.currentTime+d);v.gain.setValueAtTime(g||0.08,AC.currentTime);v.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.connect(v).connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+function beep(f,d,type,g,slide){try{if(!S||!S.settings||!S.settings.sfx)return;}catch(e){return;}try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();const o=AC.createOscillator(),v=AC.createGain();o.type=type||'sine';o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),AC.currentTime+d);v.gain.setValueAtTime(g||0.08,AC.currentTime);v.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.connect(v).connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
 const sfx={
   click:()=>beep(660,0.06,'triangle',0.05),
   hit:()=>beep(180,0.09,'square',0.05,-80),
@@ -844,21 +871,92 @@ function defaultState(){
  };
 }
 let S=null, saveTimer=null;
-function dbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(DBNAME,1);r.onupgradeneeded=()=>{r.result.createObjectStore(STORE);};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
-async function saveNow(){if(!S)return;try{const db=await dbOpen();const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(JSON.parse(JSON.stringify(S)),'main');}catch(e){}}
-function save(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250);}
-async function loadSave(){try{const db=await dbOpen();return await new Promise(res=>{const rq=db.transaction(STORE).objectStore(STORE).get('main');rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);});}catch(e){return null;}}
-function migrate(st){if(!st||st.schemaVersion!==SCHEMA)return null;const d=defaultState();const merged=Object.assign(d,st);merged.res=Object.assign(d.res,st.res||{});merged.settings=Object.assign(d.settings,st.settings||{});merged.daily=Object.assign(d.daily,st.daily||{});merged.shop=Object.assign(d.shop,st.shop||{});merged.shop.cards=Object.assign(d.shop.cards,(st.shop||{}).cards||{});merged.shop.fund=Object.assign(d.shop.fund,(st.shop||{}).fund||{});merged.shop.pass=Object.assign(d.shop.pass,(st.shop||{}).pass||{});merged.skins=Object.assign(d.skins,st.skins||{});merged.skins.owned=Object.assign({},(st.skins||{}).owned||{});merged.skins.worn=Object.assign({},(st.skins||{}).worn||{});merged.season=Object.assign(d.season,st.season||{});merged.season.cleared=Object.assign({},(st.season||{}).cleared||{});merged.season.shopBought=Object.assign({},(st.season||{}).shopBought||{});merged.arena=Object.assign(d.arena,st.arena||{});merged.arena.hist=Array.isArray((st.arena||{}).hist)?(st.arena||{}).hist.slice(0,20):[];return merged;}
+function dbOpen(){return new Promise((res,rej)=>{let r;try{r=indexedDB.open(DBNAME,1);}catch(e){rej(e);return;}r.onupgradeneeded=()=>{r.result.createObjectStore(STORE);};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);r.onblocked=()=>rej(new Error('数据库被占用'));});}
+function txDone(tx){return new Promise((res,rej)=>{tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error||new Error('存档写入失败'));tx.onabort=()=>rej(tx.error||new Error('存档写入被中断'));});}
+async function dbGet(key){const db=await dbOpen();return await new Promise((res,rej)=>{const rq=db.transaction(STORE).objectStore(STORE).get(key);rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>rej(rq.error);});}
+async function dbPut(key,val){const db=await dbOpen();const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(val,key);await txDone(tx);}
+/* 写入串行队列：每次 saveNow 返回的 Promise 只有在 IndexedDB 事务真正完成时才 resolve；
+   失败会 reject，调用方（统一领奖等）据此决定是否报成功。写入前把上一份完好主档轮换为 backup，
+   形成原子备份：新档写坏/写一半时，backup 仍是上一份完好存档。 */
+let saveChain=Promise.resolve(), saveErrShownAt=0;
+function saveNow(){
+ if(!S)return Promise.resolve(false);
+ const snap=JSON.parse(JSON.stringify(S));
+ const job=saveChain.then(async()=>{
+  const cur=await dbGet('main').catch(()=>null);
+  if(cur&&validateSave(cur)===null&&JSON.stringify(cur)!==JSON.stringify(snap))await dbPut('backup',cur);
+  await dbPut('main',snap);
+  return true;
+ });
+ saveChain=job.catch(()=>{});
+ return job;
+}
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{saveNow().catch(()=>{const now=Date.now();if(now-saveErrShownAt>20000){saveErrShownAt=now;toast('存档保存失败：浏览器存储不可用，本次进度刷新后可能丢失');}});},250);}
+async function loadSave(){return dbGet('main');}
+async function loadBackup(){try{return await dbGet('backup');}catch(e){return null;}}
+function snapSave(){return JSON.parse(JSON.stringify(S));}
+/* 领奖/结算专用：先落盘，成功才返回 true；失败则把内存状态回滚到操作前快照，
+   不清旧档、不丢领取资格、不重复发奖，并给玩家可恢复的反馈。 */
+async function saveOrRollback(snap,msg){
+ try{await saveNow();return true;}
+ catch(e){S=snap;renderTop();render();toast(msg||'保存失败：本次操作未生效，进度未改变，请检查浏览器存储后重试');return false;}
+}
+/* 深层缺省迁移：存档里缺失的任意层级字段都用默认值补齐（例如 settings 只有 sfx 时，
+   speed/autoUlt/fx/flash 等都会恢复默认，绝不出现 undefined）；多余字段保留，数组以存档为准。 */
+function fillDeep(def,src){
+ if(Array.isArray(def))return Array.isArray(src)?JSON.parse(JSON.stringify(src)):JSON.parse(JSON.stringify(def));
+ if(def&&typeof def==='object'){
+  const out={},s=(src&&typeof src==='object'&&!Array.isArray(src))?src:{};
+  for(const k in def)out[k]=fillDeep(def[k],s[k]);
+  for(const k in s)if(!(k in out))out[k]=s[k];
+  return out;
+ }
+ if(src===undefined||src===null)return def;
+ if(typeof def==='number'&&(typeof src!=='number'||!isFinite(src)))return def;
+ if(typeof def==='boolean'&&typeof src!=='boolean')return def;
+ if(typeof def==='string'&&typeof src!=='string')return def;
+ return src;
+}
+function migrate(st){
+ if(!st||typeof st!=='object'||st.schemaVersion!==SCHEMA)return null;
+ const d=defaultState();
+ const merged=fillDeep(d,st);
+ for(const id in merged.heroes){merged.heroes[id]=fillDeep({lv:1,star:1,sk:{active:1,ult:1,passive:1},spent:{gold:0,exp:0,book:0},isNew:false},merged.heroes[id]);}
+ merged.settings.speed=[1,2,3].indexOf(merged.settings.speed)>=0?merged.settings.speed:1;
+ if(!Array.isArray(merged.formation)||merged.formation.length!==5)merged.formation=d.formation.slice();
+ merged.formation=merged.formation.map(id=>(id&&merged.heroes[id])?id:null);
+ if(!merged.formation.some(Boolean))merged.formation=d.formation.slice();
+ if(!Array.isArray(merged.mail))merged.mail=d.mail;
+ merged.arena.hist=Array.isArray(merged.arena.hist)?merged.arena.hist.slice(0,20):[];
+ /* 时钟回拨保护：挂机计时起点晚于当前时间（改过系统时钟）时，重置为现在，防止负收益与未来收益 */
+ const now=Date.now();
+ if(!(merged.idle.lastCalc>0)||merged.idle.lastCalc>now)merged.idle.lastCalc=now;
+ merged.idle.pendMin=clamp(merged.idle.pendMin||0,0,480);
+ if(!(merged.idle.fracG>=0))merged.idle.fracG=0;
+ if(!(merged.idle.fracE>=0))merged.idle.fracE=0;
+ if(!(merged.idle.equipMin>=0))merged.idle.equipMin=0;
+ return merged;
+}
 function validateSave(st){
- if(!st||typeof st!=='object')return '存档格式不正确';
+ if(!st||typeof st!=='object'||Array.isArray(st))return '存档格式不正确';
  if(st.schemaVersion!==SCHEMA)return '存档版本不兼容';
- for(const k of['gold','exp','dia','ticket','book','stone'])if(!(st.res&&st.res[k]>=0))return '资源数据异常';
- for(const id in st.heroes||{})if(!HEROES[id])return '存档含未知英雄';
- if(st.res&&(st.res.stardust<0||st.res.skinTicket<0))return '资源数据异常';
+ if(!st.res||typeof st.res!=='object'||Array.isArray(st.res))return '资源数据缺失';
+ for(const k of['gold','exp','dia','ticket','book','stone'])if(typeof st.res[k]!=='number'||!isFinite(st.res[k])||st.res[k]<0)return '资源数据异常';
+ for(const k of['stardust','skinTicket'])if(st.res[k]!=null&&(typeof st.res[k]!=='number'||!isFinite(st.res[k])||st.res[k]<0))return '资源数据异常';
+ if(!st.heroes||typeof st.heroes!=='object'||Array.isArray(st.heroes)||!Object.keys(st.heroes).length)return '英雄数据缺失';
+ for(const id in st.heroes){if(!HEROES[id])return '存档含未知英雄';const h=st.heroes[id];
+  if(!h||typeof h!=='object'||!(h.lv>=1&&h.lv<=60)||!(h.star>=1&&h.star<=5))return '英雄数据异常';
+  if(h.sk!=null&&(typeof h.sk!=='object'||['active','ult','passive'].some(k=>!(h.sk[k]>=1))))return '英雄技能数据异常';}
+ if(!Array.isArray(st.formation)||!st.formation.length)return '阵容数据缺失';
+ for(const id of st.formation)if(id!=null&&!HEROES[id])return '阵容含未知英雄';
+ if(!Array.isArray(st.equips))return '装备数据缺失';
+ const uids=new Set();for(const e of st.equips){if(!e||!e.uid||uids.has(e.uid))return '装备实例重复';uids.add(e.uid);if(!SLOTS[e.slot])return '装备部位异常';if(e.hero!=null&&!HEROES[e.hero])return '装备归属异常';}
+ if(st.settings!=null&&(typeof st.settings!=='object'||Array.isArray(st.settings)))return '设置数据异常';
+ if(st.idle!=null&&(typeof st.idle!=='object'||Array.isArray(st.idle)||!(st.idle.lastCalc>=0)))return '挂机数据异常';
+ if(st.mail!=null&&!Array.isArray(st.mail))return '邮件数据异常';
  for(const id in ((st.skins||{}).owned||{}))if(!SKINS[id])return '存档含未知外观';
  for(const id in ((st.skins||{}).worn||{}))if(!SKINS[id])return '存档含未知外观';
  if(st.arena&&(!(st.arena.score>=0)||!(st.arena.left>=0&&st.arena.left<=5)))return '竞技场数据异常';
- const uids=new Set();for(const e of st.equips||[]){if(uids.has(e.uid))return '装备实例重复';uids.add(e.uid);}
  return null;
 }
 /* ---------------- 日期（游戏日 Asia/Shanghai） ---------------- */
@@ -919,8 +1017,10 @@ function unclaimedIdle(){const p=idlePending();return p.gold>=15||p.exp>=6;}
 function highestStageIdx(){let s=0;for(let g=0;g<40;g++)if(S.stages[stageId(g)])s=g+1;return s;}
 function idleRates(){const s=highestStageIdx();return {g:15+2*s,e:6+2*s};}
 function idlePending(){
- const now=Date.now();let mins=S.idle.pendMin+(now-S.idle.lastCalc)/60000;
- mins=Math.min(mins,480);const r=idleRates();
+ const now=Date.now();let elapsed=(now-(S.idle.lastCalc||now))/60000;
+ if(!(elapsed>0))elapsed=0; /* 时钟回拨保护：系统时间倒退时不产生负收益，也不倒扣已有收益 */
+ let mins=(S.idle.pendMin||0)+elapsed;
+ mins=clamp(Math.min(mins,480),0,480);const r=idleRates();
  const gF=mins*r.g+S.idle.fracG, eF=mins*r.e+S.idle.fracE;
  return {mins:mins,gold:Math.floor(gF),exp:Math.floor(eF),fracG:gF-Math.floor(gF),fracE:eF-Math.floor(eF),rates:r};
 }
@@ -960,16 +1060,24 @@ function idleSheetHTML(){
  +'<div class="btnrow"><button class="btn green" id="idleclaim" style="flex:1" '+(empty?'disabled':'')+' onclick="doClaimIdle()">'+(empty?'暂无收益可领':'领取收益')+'</button><button class="btn ghost" onclick="closeSheet()">返回主城</button></div>';
 }
 function openIdle(){sfx.click();openSheet(idleSheetHTML());}
-setInterval(()=>{const el=$('#idleamt');if(el&&window.S){const p=idlePending();el.innerHTML=ICONS.coin+' '+p.gold+' · '+ICONS.exp+' '+p.exp;const ch=$('#idlechest');if(ch)ch.classList.toggle('ready',unclaimedIdle());}},20000);
+setInterval(()=>{const el=$('#idleamt');if(el&&S){const p=idlePending();el.innerHTML=ICONS.coin+' '+p.gold+' · '+ICONS.exp+' '+p.exp;const ch=$('#idlechest');if(ch)ch.classList.toggle('ready',unclaimedIdle());}},20000);
 let idleBusy=false;
 async function doClaimIdle(){
  if(idleBusy)return;
  const p0=idlePending();if(p0.gold<1&&p0.exp<1){toast('挂机收益还太少，再等一会儿');return;}
  idleBusy=true;
- const btn=$('#idleclaim');if(btn){btn.disabled=true;btn.textContent='领取中…';}
+ const btn=$('#idleclaim');if(btn){btn.disabled=true;btn.textContent='保存中…';}
+ const snap=snapSave();
  const before=snapRes();
- const got=settleIdle();           /* 先结算并落盘，动画只是表现 */
- sfx.coin();saveNow();
+ const got=settleIdle();           /* 先在内存结算，再等事务真正落盘；落盘失败整体回滚，收益与领取资格都保留 */
+ try{await saveNow();}
+ catch(e){
+  S=snap;idleBusy=false;
+  if($('#sheetwrap').classList.contains('open'))$('#sheetbox').innerHTML=idleSheetHTML();
+  renderTop();toast('保存失败：挂机收益未领取，收益仍在宝箱里，请检查浏览器存储后重试');
+  return;
+ }
+ sfx.coin();
  const items=[];
  if(got.gold)items.push({kind:'gold',n:got.gold});
  if(got.exp)items.push({kind:'exp',n:got.exp});
@@ -981,7 +1089,8 @@ async function doClaimIdle(){
  }});
 }
 /* ---------------- 统一领奖演出 ----------------
-   约定：调用方先把奖励真正入账并存档，再把入账前的资源快照 before 传进来；
+   约定：调用方先把奖励入账，并 await saveNow() 确认 IndexedDB 事务成功后才调用本组件
+   （保存失败会回滚且不调本组件，玩家看到的是可重试提示而不是假成功）；
    本组件只负责 物品错峰弹出 → 图标弧线飞向顶栏 → 数字滚动到账，绝不改账目。 */
 const RM=(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 function snapRes(){const o={};for(const k in S.res)o[k]=S.res[k];return o;}
@@ -1098,43 +1207,58 @@ function shopClaimable(){const sh=S.shop;if(!sh)return false;const day=gameDay()
  const lv=passLevel(),p=sh.pass;
  for(let i=1;i<=lv;i++){if(!p.claimedFree[i])return true;if(p.premium&&!p.claimedPrem[i])return true;}
  return false;}
-function shopClaimWallet(){const sh=S.shop,day=gameDay();if(sh.walletDay===day){toast('今日已补领过，明天再来');return;}sh.wallet+=500;sh.walletDay=day;shopLog('每日免费补领模拟额度',500);sfx.coin();save();render();toast('已补领 500 模拟币，当前余额 '+sh.wallet);}
-function shopBuyTier(id){if(shopBusy)return;const t=SHOP_TIERS.find(x=>x.id===id),sh=S.shop;if(!t)return;
+async function shopClaimWallet(){const sh=S.shop,day=gameDay();if(sh.walletDay===day){toast('今日已补领过，明天再来');return;}const snap=snapSave();sh.wallet+=500;sh.walletDay=day;shopLog('每日免费补领模拟额度',500);
+ if(!await saveOrRollback(snap,'保存失败：补领未生效，今日仍可补领，请重试'))return;
+ sfx.coin();render();toast('已补领 500 模拟币，当前余额 '+S.shop.wallet);}
+async function shopBuyTier(id){if(shopBusy)return;const t=SHOP_TIERS.find(x=>x.id===id),sh=S.shop;if(!t)return;
  if(sh.wallet<t.price){toast('模拟钱包额度不足（需要 '+t.price+'），每日可免费补领 500');return;}
- shopBusy=true;sh.wallet-=t.price;sh.totalCharged+=t.price;
+ shopBusy=true;const snap=snapSave();sh.wallet-=t.price;sh.totalCharged+=t.price;
  const first=!sh.firstBought[t.id],gain=t.dia*(first?2:1);sh.firstBought[t.id]=true;S.res.dia+=gain;
  shopLog('购买钻石档 '+t.price+' 模拟币'+(first?'（首充双倍）':''),-t.price);
- sfx.coin();save();renderTop();render();toast('模拟充值成功：钻石 +'+gain+(first?'（首充双倍）':''));setTimeout(()=>{shopBusy=false;},400);}
-function shopClaimCum(i){const sh=S.shop,c=SHOP_CUM[i];if(!c||sh.cumClaimed[i]||sh.totalCharged<c.need)return;sh.cumClaimed[i]=true;addRes(c.rew);sfx.coin();save();renderTop();render();toast('累充返利：'+rewText(c.rew));}
+ if(!await saveOrRollback(snap,'保存失败：本次模拟购买未生效，额度未扣除，请重试')){shopBusy=false;return;}
+ sfx.coin();renderTop();render();toast('模拟充值成功：钻石 +'+gain+(first?'（首充双倍）':''));setTimeout(()=>{shopBusy=false;},400);}
+async function shopClaimCum(i){const sh=S.shop,c=SHOP_CUM[i];if(!c||sh.cumClaimed[i]||sh.totalCharged<c.need)return;const snap=snapSave();sh.cumClaimed[i]=true;addRes(c.rew);
+ if(!await saveOrRollback(snap,'保存失败：返利未发放，仍可领取，请重试'))return;
+ sfx.coin();renderTop();render();toast('累充返利：'+rewText(c.rew));}
 function cardDaysLeft(k){return Math.max(0,Math.ceil((S.shop.cards[k].until-Date.now())/86400000));}
-function shopBuyCard(k){if(shopBusy)return;const def=SHOP_CARDS[k],sh=S.shop,c=sh.cards[k];
+async function shopBuyCard(k){if(shopBusy)return;const def=SHOP_CARDS[k],sh=S.shop,c=sh.cards[k];
  if(sh.wallet<def.price){toast('模拟钱包额度不足（需要 '+def.price+'）');return;}
- shopBusy=true;sh.wallet-=def.price;sh.totalCharged+=def.price;c.until=Math.max(Date.now(),c.until)+def.days*86400000;
+ shopBusy=true;const snap=snapSave();sh.wallet-=def.price;sh.totalCharged+=def.price;c.until=Math.max(Date.now(),c.until)+def.days*86400000;
  shopLog((c.until>Date.now()&&cardDaysLeft(k)>def.days?'续购':'购买')+def.name+'（'+def.days+' 天）',-def.price);
- sfx.coin();save();render();toast(def.name+'已生效（剩余 '+cardDaysLeft(k)+' 天）：每天可领钻石 ×'+def.daily);setTimeout(()=>{shopBusy=false;},400);}
-function shopClaimCard(k){const def=SHOP_CARDS[k],sh=S.shop,c=sh.cards[k],day=gameDay();
+ if(!await saveOrRollback(snap,'保存失败：本次购买未生效，额度未扣除，请重试')){shopBusy=false;return;}
+ sfx.coin();render();toast(def.name+'已生效（剩余 '+cardDaysLeft(k)+' 天）：每天可领钻石 ×'+def.daily);setTimeout(()=>{shopBusy=false;},400);}
+async function shopClaimCard(k){const def=SHOP_CARDS[k],sh=S.shop,c=sh.cards[k],day=gameDay();
  if(c.until<=Date.now()){toast(def.name+'未生效或已过期');return;}
  if(c.lastClaim===day){toast('今日'+def.name+'奖励已领取');return;}
- c.lastClaim=day;S.res.dia+=def.daily;shopLog(def.name+'每日奖励领取',0);
- sfx.coin();save();renderTop();render();toast(def.name+'每日奖励：钻石 +'+def.daily);}
-function shopBuyFund(){if(shopBusy)return;const sh=S.shop;if(sh.fund.bought)return;
+ const snap=snapSave();c.lastClaim=day;S.res.dia+=def.daily;shopLog(def.name+'每日奖励领取',0);
+ if(!await saveOrRollback(snap,'保存失败：'+def.name+'每日奖励未发放，今日仍可领取，请重试'))return;
+ sfx.coin();renderTop();render();toast(def.name+'每日奖励：钻石 +'+def.daily);}
+async function shopBuyFund(){if(shopBusy)return;const sh=S.shop;if(sh.fund.bought)return;
  if(sh.wallet<FUND_PRICE){toast('模拟钱包额度不足（需要 '+FUND_PRICE+'）');return;}
- shopBusy=true;sh.wallet-=FUND_PRICE;sh.totalCharged+=FUND_PRICE;sh.fund.bought=true;shopLog('购买成长基金',-FUND_PRICE);
- sfx.coin();save();render();toast('成长基金已开通，按主线进度逐档领取');setTimeout(()=>{shopBusy=false;},400);}
-function shopClaimFund(i){const sh=S.shop,t=FUND_TIERS[i];if(!t||!sh.fund.bought||sh.fund.claimed[i]||highestStageIdx()<t.need)return;sh.fund.claimed[i]=true;addRes(t.rew);sfx.coin();save();renderTop();render();toast('成长基金：'+rewText(t.rew));}
-function shopBuyPass(){if(shopBusy)return;const sh=S.shop;if(sh.pass.premium)return;
+ shopBusy=true;const snap=snapSave();sh.wallet-=FUND_PRICE;sh.totalCharged+=FUND_PRICE;sh.fund.bought=true;shopLog('购买成长基金',-FUND_PRICE);
+ if(!await saveOrRollback(snap,'保存失败：成长基金未开通，额度未扣除，请重试')){shopBusy=false;return;}
+ sfx.coin();render();toast('成长基金已开通，按主线进度逐档领取');setTimeout(()=>{shopBusy=false;},400);}
+async function shopClaimFund(i){const sh=S.shop,t=FUND_TIERS[i];if(!t||!sh.fund.bought||sh.fund.claimed[i]||highestStageIdx()<t.need)return;const snap=snapSave();sh.fund.claimed[i]=true;addRes(t.rew);
+ if(!await saveOrRollback(snap,'保存失败：成长基金奖励未发放，仍可领取，请重试'))return;
+ sfx.coin();renderTop();render();toast('成长基金：'+rewText(t.rew));}
+async function shopBuyPass(){if(shopBusy)return;const sh=S.shop;if(sh.pass.premium)return;
  if(sh.wallet<PASS_PRICE){toast('模拟钱包额度不足（需要 '+PASS_PRICE+'）');return;}
- shopBusy=true;sh.wallet-=PASS_PRICE;sh.totalCharged+=PASS_PRICE;sh.pass.premium=true;shopLog('购买远征战令 · 高级轨',-PASS_PRICE);
- sfx.coin();save();render();toast('高级轨已开通，已达等级的奖励可补领');setTimeout(()=>{shopBusy=false;},400);}
-function shopClaimPass(lv,prem){const sh=S.shop,p=sh.pass;if(lv>passLevel())return;
- if(prem){if(!p.premium||p.claimedPrem[lv])return;p.claimedPrem[lv]=true;}
- else{if(p.claimedFree[lv])return;p.claimedFree[lv]=true;}
- const rew=passRew(lv,prem);addRes(rew);sfx.coin();save();renderTop();render();toast('战令 '+lv+' 级奖励：'+rewText(rew));}
-function shopBuyPack(id){if(shopBusy)return;const pk=SHOP_PACKS.find(x=>x.id===id),sh=S.shop;if(!pk)return;const n=sh.packBought[id]||0;
+ shopBusy=true;const snap=snapSave();sh.wallet-=PASS_PRICE;sh.totalCharged+=PASS_PRICE;sh.pass.premium=true;shopLog('购买远征战令 · 高级轨',-PASS_PRICE);
+ if(!await saveOrRollback(snap,'保存失败：高级轨未开通，额度未扣除，请重试')){shopBusy=false;return;}
+ sfx.coin();render();toast('高级轨已开通，已达等级的奖励可补领');setTimeout(()=>{shopBusy=false;},400);}
+async function shopClaimPass(lv,prem){const sh=S.shop,p=sh.pass;if(lv>passLevel())return;
+ if(prem){if(!p.premium||p.claimedPrem[lv])return;}
+ else{if(p.claimedFree[lv])return;}
+ const snap=snapSave();if(prem)p.claimedPrem[lv]=true;else p.claimedFree[lv]=true;
+ const rew=passRew(lv,prem);addRes(rew);
+ if(!await saveOrRollback(snap,'保存失败：战令奖励未发放，仍可领取，请重试'))return;
+ sfx.coin();renderTop();render();toast('战令 '+lv+' 级奖励：'+rewText(rew));}
+async function shopBuyPack(id){if(shopBusy)return;const pk=SHOP_PACKS.find(x=>x.id===id),sh=S.shop;if(!pk)return;const n=sh.packBought[id]||0;
  if(n>=pk.limit){toast('该礼包已售罄');return;}
  if(sh.wallet<pk.price){toast('模拟钱包额度不足（需要 '+pk.price+'）');return;}
- shopBusy=true;sh.wallet-=pk.price;sh.totalCharged+=pk.price;sh.packBought[id]=n+1;addRes(pk.rew);shopLog('购买礼包「'+pk.name+'」',-pk.price);
- sfx.coin();save();renderTop();render();toast('礼包到账：'+rewText(pk.rew));setTimeout(()=>{shopBusy=false;},400);}
+ shopBusy=true;const snap=snapSave();sh.wallet-=pk.price;sh.totalCharged+=pk.price;sh.packBought[id]=n+1;addRes(pk.rew);shopLog('购买礼包「'+pk.name+'」',-pk.price);
+ if(!await saveOrRollback(snap,'保存失败：礼包未购买，额度未扣除，请重试')){shopBusy=false;return;}
+ sfx.coin();renderTop();render();toast('礼包到账：'+rewText(pk.rew));setTimeout(()=>{shopBusy=false;},400);}
 function vShop(){
  const sh=S.shop,day=gameDay(),cleared=highestStageIdx(),plv=passLevel();
  const tiers=SHOP_TIERS.map(t=>{const first=!sh.firstBought[t.id];return '<div class="tier"><div style="font-size:24px">'+ICONS.dia+'</div><b>钻石 ×'+t.dia+'</b><br>'+(first?'<span class="firsttag">首充双倍 · 实得 '+t.dia*2+'</span>':'<span class="mut" style="font-size:11px">首充双倍已领</span>')+'<div class="price">'+t.price+' <span style="font-size:12px">模拟币</span></div><button class="btn sm '+(sh.wallet>=t.price?'green':'')+'" '+(sh.wallet<t.price?'disabled':'')+' onclick="shopBuyTier(\''+t.id+'\')">'+(sh.wallet>=t.price?'模拟购买':'额度不足')+'</button></div>';}).join('');
@@ -1246,16 +1370,20 @@ function rollOne(){
  P.group++;if(P.group>=10){P.group=0;P.groupSR=false;}
  const pool=POOLS[rar];return pool[Math.floor(Math.random()*pool.length)];
 }
-function doSummon(n,pay){
+async function doSummon(n,pay){
  const costT=n===10?10:1, costD=n===10?2700:300;
- if(pay==='ticket'){if(S.res.ticket<costT){toast('招募券不足（需要 '+costT+' 张）');return;}S.res.ticket-=costT;}
- else{if(S.res.dia<costD){toast('钻石不足（需要 '+costD+'）');return;}S.res.dia-=costD;}
+ if(pay==='ticket'){if(S.res.ticket<costT){toast('招募券不足（需要 '+costT+' 张）');return;}}
+ else{if(S.res.dia<costD){toast('钻石不足（需要 '+costD+'）');return;}}
+ const snap=snapSave();
+ if(pay==='ticket')S.res.ticket-=costT;else S.res.dia-=costD;
  const results=[];
  for(let i=0;i<n;i++){const id=rollOne();const isNew=!S.heroes[id];
   if(isNew){S.heroes[id]={lv:1,star:1,sk:{active:1,ult:1,passive:1},spent:{gold:0,exp:0,book:0},isNew:true};}
   else{S.frags[id]=(S.frags[id]||0)+FRAG_BY_RAR[HEROES[id].rar];}
   results.push({id:id,isNew:isNew});}
- bump('summons',n);save();sfx.summon();renderTop();
+ bump('summons',n);
+ if(!await saveOrRollback(snap,'保存失败：本次招募未生效，货币未扣除，请重试'))return;
+ sfx.summon();renderTop();
  showSummonResult(results);
 }
 /* ============================================================
@@ -1470,7 +1598,7 @@ function enemyActive(u){
 }
 /* ---------------- 单位构建 ---------------- */
 let unitSeq=0;
-function baseUnit(o){return Object.assign({uid:'u'+(++unitSeq),alive:true,hp:o.maxHp,energy:20,atkT:600+Math.random()*400,cd:o.cd0||4000,buffs:[],shields:[],stats:{dmg:0,heal:0,taken:0},flags:{},cast:null,basicHits:0,crit:5,healPct:0,resist:0,isBoss:false,kind:'basic',skLv:{active:1,ult:1,passive:1}},o);}
+function baseUnit(o){const seedRnd=(typeof B!=='undefined'&&B&&B.rng)?B.rng:Math.random;return Object.assign({uid:'u'+(++unitSeq),alive:true,hp:o.maxHp,energy:20,atkT:600+seedRnd()*400,cd:o.cd0||4000,buffs:[],shields:[],stats:{dmg:0,heal:0,taken:0},flags:{},cast:null,basicHits:0,crit:5,healPct:0,resist:0,isBoss:false,kind:'basic',skLv:{active:1,ult:1,passive:1}},o);}
 function buildHeroUnits(){
  const bonds=calcBonds(S.formation);
  return S.formation.map((id,pos)=>{if(!id)return null;const H=HEROES[id],st=heroStats(id);
@@ -1635,7 +1763,7 @@ function endBattle(win,reason){
 function createBattle(cfg){
  unitSeq=0;
  B={t:0,rng:mulberry32(hashStr(cfg.seedStr||cfg.title)),units:[],events:[],log:['战斗开始！'],focus:null,autoUlt:S.settings.autoUlt,speed:S.settings.speed||1,paused:false,over:false,result:null,
-    kind:cfg.kind,ref:cfg.ref,title:cfg.title,parTime:cfg.parTime||45000,onEnd:cfg.onEnd,bossKey:cfg.bossKey||null,ui:!!cfg.ui,relics:cfg.relics||null};
+    kind:cfg.kind,ref:cfg.ref,title:cfg.title,parTime:cfg.parTime||45000,onEnd:cfg.onEnd,bossKey:cfg.bossKey||null,ui:!!cfg.ui,relics:cfg.relics||null,dunType:cfg.dunType||null,dunDiff:cfg.dunDiff||null};
  B.units=buildHeroUnits();
  if(cfg.hpMap){ // 迷雾远征：生命继承，倒下者本场不可战
   B.units=B.units.filter(u=>cfg.hpMap[u.hid]==null||cfg.hpMap[u.hid]>0);
@@ -1711,7 +1839,7 @@ function vCity(){
  +'<div class="flag" style="right:9%;top:10%"><div style="transform:scaleX(-1)">'+flagSVG('#3d86c2')+'</div></div>'
  +'<div class="guildname">咕噜冒险公会<div class="guildsub">铃芽大陆 · 寻找晨星炉心碎片</div></div>'
  +'<div class="questribbon"><div class="qt"><small>'+ICONS.target+' 当前目标</small>'+obj.t+'</div><button class="btn" onclick="'+obj.go+'">前往</button></div>'
- +'<button class="bchip" style="left:50%;top:28%" onclick="go(\'map\')"><span class="bi">'+ICONS.castle+'</span>公会大厅<small>出征主线</small></button>'
+ +'<button class="bchip" style="left:50%;top:36%" onclick="go(\'map\')"><span class="bi">'+ICONS.castle+'</span>公会大厅<small>出征主线</small></button>'
  +'<button class="bchip" style="left:15%;top:44%" onclick="go(\'summon\')"><span class="bi">'+ICONS.mug+'</span>酒馆<small>招募英雄</small></button>'
  +'<button class="bchip" style="left:85%;top:44%" onclick="go(\'bag\')"><span class="bi">'+ICONS.sword+'</span>装备铺<small>背包装备</small></button>'
  +'<button class="bchip" style="left:50%;top:47%" onclick="go(\'shop\')"><span class="bi">'+ICONS.dia+'</span>充值中心<small>免费模拟</small>'+(shopClaimable()?'<span class="dot">!</span>':'')+'</button>'
@@ -1983,9 +2111,11 @@ function vDungeons(){
  return '<div class="page"><h2 class="ptitle">'+ICONS.coin+' 资源副本</h2>'+cards+'<div class="panel"><div class="mut">三星通关（45 秒内全员存活）后可扫荡：立即结算奖励并扣 1 次次数。</div></div></div>';
 }
 function startDungeonBattle(type,diff){const ch=type==='gold'?2:type==='exp'?1:4;openBattle({kind:'dungeon',ref:type+'_'+diff,title:DUNGEON_DEF[type].n+' · 难度'+diff,seedStr:'dun'+type+diff,enemies:dungeonEnemies(type,diff),bg:CHAPTERS[ch-1].bg,bgCls:CHAPTERS[ch-1].cls,parTime:45000,dunType:type,dunDiff:diff});}
-function sweepDungeon(type,diff){
+async function sweepDungeon(type,diff){
  if((S.dungeon.used[type]||0)>=3){toast('今日次数已用完');return;}
- S.dungeon.used[type]++;const rew=DUNGEON_DEF[type].rew(diff);addRes(rew);bump('dungeons');sfx.coin();save();renderTop();render();toast('扫荡成功：'+rewText(rew));
+ const snap=snapSave();S.dungeon.used[type]++;const rew=DUNGEON_DEF[type].rew(diff);addRes(rew);bump('dungeons');
+ if(!await saveOrRollback(snap,'保存失败：扫荡未生效，次数未扣除，请重试'))return;
+ sfx.coin();renderTop();render();toast('扫荡成功：'+rewText(rew));
 }
 /* ---------------- 赛季活动「星尘季」：关卡 / 兑换商店 ---------------- */
 function seasonEnemies(st){
@@ -1999,14 +2129,17 @@ function seasonUnlocked(i){return i===0||!!S.season.cleared[SEASON_STAGES[i-1].i
 function startSeasonBattle(i){const st=SEASON_STAGES[i];if(!seasonUnlocked(i)){toast('先通关上一活动关卡');return;}
  openBattle({kind:'season',ref:i,title:'星尘季 · '+st.name,seedStr:'season'+st.id+'_'+Date.now(),enemies:seasonEnemies(st),bossKey:st.id==='s5'?'4':null,bg:CHAPTERS[st.bg].bg,bgCls:CHAPTERS[st.bg].cls,parTime:60000});}
 let seasonBusy=false;
-function seasonShopBuy(idx){if(seasonBusy)return;const it=SEASON_SHOP[idx];if(!it)return;const bought=S.season.shopBought[it.id]||0;
+async function seasonShopBuy(idx){if(seasonBusy)return;const it=SEASON_SHOP[idx];if(!it)return;const bought=S.season.shopBought[it.id]||0;
  if(it.skin&&S.skins.owned[it.skin]){toast('已拥有该外观');return;}
  if(bought>=it.limit){toast('已达限购次数');return;}
  if((S.res.stardust||0)<it.price){toast('星尘不足（需要 '+it.price+'），去打活动关卡获取');return;}
- seasonBusy=true;S.res.stardust-=it.price;S.season.shopBought[it.id]=bought+1;
- if(it.skin){S.skins.owned[it.skin]=true;toast('兑换成功：'+HEROES[it.skin].name+' 外观「'+SKINS[it.skin].name+'」已解锁，去英雄详情穿戴');}
- else{addRes(it.rew);toast('兑换成功：'+rewText(it.rew));}
- sfx.coin();save();renderTop();render();setTimeout(()=>{seasonBusy=false;},300);}
+ seasonBusy=true;const snap=snapSave();S.res.stardust-=it.price;S.season.shopBought[it.id]=bought+1;
+ if(it.skin){S.skins.owned[it.skin]=true;}
+ else{addRes(it.rew);}
+ if(!await saveOrRollback(snap,'保存失败：兑换未生效，星尘未扣除，请重试')){seasonBusy=false;return;}
+ if(it.skin)toast('兑换成功：'+HEROES[it.skin].name+' 外观「'+SKINS[it.skin].name+'」已解锁，去英雄详情穿戴');
+ else toast('兑换成功：'+rewText(it.rew));
+ sfx.coin();renderTop();render();setTimeout(()=>{seasonBusy=false;},300);}
 function vSeason(){
  const rows=SEASON_STAGES.map((st,i)=>{const stars=S.season.cleared[st.id]||0,un=seasonUnlocked(i);
   const ens=st.ens.map(([e,n])=>e==='BOSS4'?BOSSES.B4.name+'×1':ENEMIES[e].name+'×'+n).join('、');
@@ -2252,7 +2385,7 @@ function battleAdvice(res){
  return adv.slice(0,2);
 }
 function aliveUnitsSafe(){return B?B.units.filter(u=>u.side===0&&u.alive).length:0;}
-function settleBattle(res){
+async function settleBattle(res){
  bump('battles');if(res.win)bump('wins');passAddXp(res.win?30:15);
  if(B.kind==='exp'){settleExpedition(res);return;}
  let rew={},note='';
@@ -2279,9 +2412,12 @@ function settleBattle(res){
    } else note='今日挑战次数已用完，本场胜利不计积分、不发首胜奖励';}
  }
  if(!res.win&&B.kind==='arena'){const T=ARENA_TIERS[B.ref],A=S.arena;arenaDaily();const loss=Math.min(T.lose,A.score);A.score-=loss;A.losses++;A.hist.unshift({day:gameDay(),tier:T.name,win:false,delta:-loss,secs:Math.round(res.t/1000)});A.hist=A.hist.slice(0,20);note='训练积分 '+(loss>0?('−'+loss+'（当前 '+A.score+' 分 · '+arenaRank(A.score).name+'段位）'):'不扣分')+' · 失败不扣挑战次数（剩余 '+A.left+'/5）';}
- save();renderTop();
+ let saveOk=true;
+ try{await saveNow();}catch(e){saveOk=false;}
+ renderTop();
  const statsRows=res.stats.map(s=>'<tr><td>'+s.name+(s.side===1?'（敌）':'')+'</td><td>'+fmt(s.dmg)+'</td><td>'+fmt(s.heal)+'</td><td>'+fmt(s.taken)+'</td><td>'+(s.alive?'存活':'倒下')+'</td></tr>').join('');
  const adv=battleAdvice(res);
+ if(!saveOk)adv.unshift('存档保存失败：本次结算暂存在当前页面，刷新可能丢失。请检查浏览器存储空间，并到设置页导出存档备份。');
  openModal('<div class="resultbig '+(res.win?'win':'lose')+'">'+(res.win?'胜 利':'战 败')+'</div>'
   +(res.win?'<div style="text-align:center" class="stars" style="font-size:20px">'+'★'.repeat(res.stars)+'<span class="off">'+'★'.repeat(3-res.stars)+'</span></div>':'')
   +'<div style="text-align:center" class="mut">用时 '+Math.round(res.t/1000)+' 秒'+(res.reason==='timeout'?'（超时）':'')+'</div>'
@@ -2298,7 +2434,7 @@ function settleBattle(res){
 }
 function retryBattle(){const cfg=B.cfg;closeModal();closeBattle();setTimeout(()=>openBattle(cfg),60);}
 /* ---------------- 战斗界面 ---------------- */
-let battleTimer=null,unitEls={};
+let battleTimer=null,unitEls={},battleLastTs=0,battleAcc=0;
 const POS={e:[[38,36],[64,36],[22,13],[50,11],[78,13]],h:[[36,64],[64,64],[22,83],[50,85],[78,83]]};
 function openBattle(cfg){
  if(!S.formation.some(Boolean)){toast('阵容为空，先去编队上阵英雄');go('formation');return;}
@@ -2317,6 +2453,7 @@ function openBattle(cfg){
  buildUltBar();
  blog('点击敌方单位可设置集火标记。');
  clearInterval(battleTimer);
+ battleAcc=0;battleLastTs=performance.now();
  battleTimer=setInterval(battleFrame,50);
  document.addEventListener('visibilitychange',visPause);
 }
@@ -2345,9 +2482,9 @@ function manualUlt(uid){
 }
 function cycleSpeed(){B.speed=B.speed>=3?1:B.speed+1;$('#bspd').textContent=B.speed+'×';sfx.click();}
 function toggleAutoUlt(){B.autoUlt=!B.autoUlt;$('#bauto').classList.toggle('on',B.autoUlt);sfx.click();}
-function togglePause(){if(!B||B.over)return;B.paused=!B.paused;$('#bpause').textContent=B.paused?'继续':'暂停';sfx.click();}
+function togglePause(){if(!B||B.over)return;B.paused=!B.paused;battleLastTs=performance.now();battleAcc=0;$('#bpause').textContent=B.paused?'继续':'暂停';sfx.click();}
 function retreatBattle(){if(!B)return;B._wasPaused=B.paused;B.paused=true;openModal('<h3>确认撤退？</h3><p class="mut">撤退不会获得任何奖励，战斗进度不保存。（弹窗期间战斗已暂停）</p><div class="btnrow"><button class="btn red" onclick="closeModal();closeBattle();render()">确认撤退</button><button class="btn ghost" onclick="closeModal();if(B)B.paused=B._wasPaused">继续战斗</button></div>');}
-function closeBattle(){clearInterval(battleTimer);battleTimer=null;document.removeEventListener('visibilitychange',visPause);$('#battlewrap').classList.remove('open');$('#battlewrap').innerHTML='';B=null;unitEls={};}
+function closeBattle(){clearInterval(battleTimer);battleTimer=null;battleLastTs=0;battleAcc=0;document.removeEventListener('visibilitychange',visPause);$('#battlewrap').classList.remove('open');$('#battlewrap').innerHTML='';B=null;unitEls={};}
 function blog(msg){const l=$('#blog');if(!l)return;const d=document.createElement('div');d.textContent='› '+msg;l.appendChild(d);while(l.children.length>30)l.firstChild.remove();l.scrollTop=l.scrollHeight;}
 function floater(u,txt,cls){
  const f=$('#bfield'),el=unitEls[u.uid];if(!f||!el)return;
@@ -2401,7 +2538,18 @@ function consumeEvents(){
 }
 function battleFrame(){
  if(!B)return;
- if(!B.paused&&!B.over){const steps=B.speed;for(let i=0;i<steps;i++)simStep();}
+ /* 真实时钟固定步：用墙钟增量 × 倍速累积，每满 100ms 推进一个逻辑步。
+    1× 时墙钟 1 秒 = B.t +1000ms；单帧增量上限 250ms，切后台/长卡顿回来不会瞬间快进补步。 */
+ const nowTs=performance.now();
+ if(!battleLastTs)battleLastTs=nowTs;
+ let dt=nowTs-battleLastTs;battleLastTs=nowTs;
+ if(!(dt>0))dt=0;if(dt>250)dt=250;
+ if(!B.paused&&!B.over){
+  battleAcc+=dt*(B.speed||1);
+  let guard=0;
+  while(battleAcc>=100&&guard++<12){simStep();battleAcc-=100;if(!B||B.over)break;}
+  if(battleAcc>300)battleAcc=300;
+ }
  consumeEvents();
  // 更新单位状态
  B.units.forEach(u=>{const el=unitEls[u.uid];if(!el)return;
@@ -2513,29 +2661,42 @@ function vQuests(){
  +'<div class="filters">'+cats.map(c=>'<button class="'+(questTab===c?'on':'')+'" onclick="questTab=\''+c+'\';render()">'+c+'</button>').join('')+'</div>'
  +'<div class="panel">'+(rows||'<div class="emptybox">暂无任务</div>')+'</div></div>';
 }
-function claimQuest(id){const q=QUESTS.find(x=>x.id===id);if(!q||isQuestClaimed(q)||questProgress(q)<q.target)return;
- const before=snapRes();addRes(q.rew);if(q.daily)S.daily.claimed[id]=true;else S.questClaimed[id]=true;passAddXp(15);sfx.coin();saveNow();presentRewards({title:'任务奖励 · '+q.name,items:rewToItems(q.rew),before:before,onDone:()=>render()});}
-function claimAllQuests(){const merged={};let n=0;QUESTS.forEach(q=>{if(!isQuestClaimed(q)&&questProgress(q)>=q.target){for(const k in q.rew){if(k==='frag'){merged.frag=merged.frag||{};for(const h in q.rew.frag)merged.frag[h]=(merged.frag[h]||0)+q.rew.frag[h];}else merged[k]=(merged[k]||0)+q.rew[k];}if(q.daily)S.daily.claimed[q.id]=true;else S.questClaimed[q.id]=true;n++;}});
- if(n){const before=snapRes();addRes(merged);passAddXp(15*n);sfx.coin();saveNow();presentRewards({title:'任务奖励 ×'+n+'（合并领取）',items:rewToItems(merged),before:before,onDone:()=>render()});}else toast('暂无可领取的任务');}
-function claimChest(i){const c=ACTIVITY_CHESTS[i];const pts=QUESTS.filter(q=>q.daily&&S.daily.claimed[q.id]).reduce((a,q)=>a+(q.act||0),0);
- if(S.daily.chests[i]||pts<c.pts)return;const before=snapRes();S.daily.chests[i]=true;addRes(c.rew);passAddXp(10);sfx.coin();saveNow();presentRewards({title:'活跃宝箱',items:rewToItems(c.rew),before:before,onDone:()=>render()});}
+let claimBusy=false;
+async function claimQuest(id){const q=QUESTS.find(x=>x.id===id);if(!q||isQuestClaimed(q)||questProgress(q)<q.target||claimBusy)return;
+ claimBusy=true;const snap=snapSave();const before=snapRes();addRes(q.rew);if(q.daily)S.daily.claimed[id]=true;else S.questClaimed[id]=true;passAddXp(15);
+ if(!await saveOrRollback(snap,'保存失败：任务奖励未发放，任务仍可领取，请重试')){claimBusy=false;return;}
+ claimBusy=false;sfx.coin();presentRewards({title:'任务奖励 · '+q.name,items:rewToItems(q.rew),before:before,onDone:()=>render()});}
+async function claimAllQuests(){if(claimBusy)return;const merged={};let n=0;QUESTS.forEach(q=>{if(!isQuestClaimed(q)&&questProgress(q)>=q.target){for(const k in q.rew){if(k==='frag'){merged.frag=merged.frag||{};for(const h in q.rew.frag)merged.frag[h]=(merged.frag[h]||0)+q.rew.frag[h];}else merged[k]=(merged[k]||0)+q.rew[k];}n++;}});
+ if(n){claimBusy=true;const snap=snapSave();QUESTS.forEach(q=>{if(!isQuestClaimed(q)&&questProgress(q)>=q.target){if(q.daily)S.daily.claimed[q.id]=true;else S.questClaimed[q.id]=true;}});const before=snapRes();addRes(merged);passAddXp(15*n);
+  if(!await saveOrRollback(snap,'保存失败：任务奖励未发放，任务仍可领取，请重试')){claimBusy=false;return;}
+  claimBusy=false;sfx.coin();presentRewards({title:'任务奖励 ×'+n+'（合并领取）',items:rewToItems(merged),before:before,onDone:()=>render()});}else toast('暂无可领取的任务');}
+async function claimChest(i){const c=ACTIVITY_CHESTS[i];const pts=QUESTS.filter(q=>q.daily&&S.daily.claimed[q.id]).reduce((a,q)=>a+(q.act||0),0);
+ if(S.daily.chests[i]||pts<c.pts||claimBusy)return;claimBusy=true;const snap=snapSave();const before=snapRes();S.daily.chests[i]=true;addRes(c.rew);passAddXp(10);
+ if(!await saveOrRollback(snap,'保存失败：活跃宝箱未领取，仍可重试')){claimBusy=false;return;}
+ claimBusy=false;sfx.coin();presentRewards({title:'活跃宝箱',items:rewToItems(c.rew),before:before,onDone:()=>render()});}
 function openSignin(){
  const today=gameDay(),can=S.signin.last!==today,idx=S.signin.days%7;
  const cells=SIGNIN.map((r,i)=>{const state=i<idx?'done':(i===idx&&can?'today':'todo');
   return '<div style="flex:1;min-width:64px;text-align:center;border:2.5px solid '+(state==='today'?'var(--gold)':state==='done'?'#73a55c':'#a5814e')+';border-radius:11px;padding:7px 3px;background:'+(state==='today'?'#ffedbe':'rgba(255,255,255,.4)')+'"><div style="font-size:19px">'+(state==='done'?'已领':'礼包')+'</div><b style="font-size:12px">第 '+(i+1)+' 天</b><div class="mut" style="font-size:11px">'+rewText(r)+'</div></div>';}).join('');
  openModal('<h3>'+ICONS.calendar+' 七日签到</h3><div style="display:flex;gap:6px;flex-wrap:wrap">'+cells+'</div><p class="mut">每个游戏日可签到一次（Asia/Shanghai），七日循环。已累计签到 '+S.signin.days+' 天。</p><div class="btnrow">'+(can?'<button class="btn green" style="flex:1" onclick="doSignin()">签到领奖</button>':'<button class="btn" disabled>今日已签到</button>')+'<button class="btn ghost" onclick="closeModal()">关闭</button></div>');
 }
-function doSignin(){if(S.signin.last===gameDay())return;const r=SIGNIN[S.signin.days%7];const before=snapRes();addRes(r);S.signin.last=gameDay();S.signin.days++;sfx.coin();saveNow();closeModal();presentRewards({title:'签到奖励 · 第 '+(S.signin.days%7===0?7:S.signin.days%7)+' 天',items:rewToItems(r),before:before,onDone:()=>render()});}
+async function doSignin(){if(S.signin.last===gameDay()||claimBusy)return;claimBusy=true;const r=SIGNIN[S.signin.days%7];const snap=snapSave();const before=snapRes();addRes(r);S.signin.last=gameDay();S.signin.days++;
+ if(!await saveOrRollback(snap,'保存失败：签到未完成，今日仍可签到，请重试')){claimBusy=false;return;}
+ claimBusy=false;sfx.coin();closeModal();presentRewards({title:'签到奖励 · 第 '+(S.signin.days%7===0?7:S.signin.days%7)+' 天',items:rewToItems(r),before:before,onDone:()=>render()});}
 function vMail(){
  const rows=S.mail.slice().reverse().map(m=>{const real=S.mail[S.mail.length-1-S.mail.slice().reverse().indexOf(m)];
   return '<div class="itemrow"><div class="itemicon">'+ICONS.mail+'</div><div style="flex:1"><b>'+m.title+'</b>'+(m.state==='unread'?' <span class="newtag" style="position:static">未读</span>':'')+'<div class="mut">'+m.body+'</div>'+(m.atts&&Object.keys(m.atts).length?'<div class="mut">附件：'+rewText(m.atts)+'</div>':'')+'</div>'
   +(m.state==='claimed'?'<span class="cost">已领取</span>':(m.atts&&Object.keys(m.atts).length?'<button class="btn sm green" onclick="claimMail(\''+m.id+'\')">领取附件</button>':'<button class="btn sm" onclick="readMail(\''+m.id+'\')">标为已读</button>'))+'</div>';}).join('');
  return '<div class="page"><h2 class="ptitle">'+ICONS.mail+' 系统邮件</h2><div class="panel">'+(rows||'<div class="emptybox">暂无邮件</div>')+'<div class="btnrow"><button class="btn sm" onclick="claimAllMail()">一键领取全部附件</button></div></div></div>';
 }
-function claimMail(id){const m=S.mail.find(x=>x.id===id);if(!m||m.state==='claimed')return;const before=snapRes();if(m.atts)addRes(m.atts);m.state='claimed';sfx.coin();saveNow();presentRewards({title:'邮件附件 · '+m.title,items:rewToItems(m.atts||{}),before:before,onDone:()=>render()});}
+async function claimMail(id){const m=S.mail.find(x=>x.id===id);if(!m||m.state==='claimed'||claimBusy)return;claimBusy=true;const snap=snapSave();const before=snapRes();if(m.atts)addRes(m.atts);m.state='claimed';
+ if(!await saveOrRollback(snap,'保存失败：邮件附件未领取，仍可重试')){claimBusy=false;return;}
+ claimBusy=false;sfx.coin();presentRewards({title:'邮件附件 · '+m.title,items:rewToItems(m.atts||{}),before:before,onDone:()=>render()});}
 function readMail(id){const m=S.mail.find(x=>x.id===id);if(m&&m.state==='unread'){m.state='read';save();render();}}
-function claimAllMail(){const merged={};let n=0;S.mail.forEach(m=>{if(m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length){for(const k in m.atts){if(k==='frag'){merged.frag=merged.frag||{};for(const h in m.atts.frag)merged.frag[h]=(merged.frag[h]||0)+m.atts.frag[h];}else merged[k]=(merged[k]||0)+m.atts[k];}n++;}});
- if(n){const before=snapRes();addRes(merged);S.mail.forEach(m=>{if(m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length)m.state='claimed';});sfx.coin();saveNow();presentRewards({title:'邮件附件 ×'+n+'（合并领取）',items:rewToItems(merged),before:before,onDone:()=>render()});}else toast('暂无可领取附件');}
+async function claimAllMail(){if(claimBusy)return;const merged={};let n=0;S.mail.forEach(m=>{if(m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length){for(const k in m.atts){if(k==='frag'){merged.frag=merged.frag||{};for(const h in m.atts.frag)merged.frag[h]=(merged.frag[h]||0)+m.atts.frag[h];}else merged[k]=(merged[k]||0)+m.atts[k];}n++;}});
+ if(n){claimBusy=true;const snap=snapSave();const before=snapRes();addRes(merged);S.mail.forEach(m=>{if(m.state!=='claimed'&&m.atts&&Object.keys(m.atts).length)m.state='claimed';});
+  if(!await saveOrRollback(snap,'保存失败：邮件附件未领取，仍可重试')){claimBusy=false;return;}
+  claimBusy=false;sfx.coin();presentRewards({title:'邮件附件 ×'+n+'（合并领取）',items:rewToItems(merged),before:before,onDone:()=>render()});}else toast('暂无可领取附件');}
 /* ---------------- 剧情 ---------------- */
 function showStory(key,idx){
  const st=STORY[key];if(!st)return;idx=idx||0;
@@ -2604,6 +2765,7 @@ function vDocs(){
  +'<div class="panel docsec" id="docsec5"'+dshow(5)+'><b>五、存档结构说明（对应 SAVE_SCHEMA）</b><p class="mut">本机 IndexedDB（库 gulu-expedition / 表 save / 键 main），schemaVersion 1。字段：玩家 ID 与昵称、资源、英雄（等级/星级/技能/实际投入）、装备实例（唯一 uid）、阵容与 3 套预设、主线星级与章节奖励、塔进度、副本次数、任务/签到/邮件状态、招募双保底计数、挂机时间戳、设置、剧情已读、迷雾远征进行状态（节点/生命继承/遗物/待结算收益）、模拟充值中心状态（模拟钱包余额与补领日、累计额、逐档首充、累充领取、月卡/年卡到期与日领、成长基金、战令经验与双轨领取、礼包限购计数、流水）、外观状态（逐英雄已拥有 owned 与当前穿戴 worn）、星尘季状态（星尘与外观解锁券余额、活动关卡通关星级、兑换限购计数）。导入校验：版本不符、负资源、未知英雄、装备实例重复会被拒绝；关键操作后自动保存，刷新自动恢复，初始资源只发放一次。</p></div>'
  +'<div class="panel docsec" id="docsec6"'+dshow(6)+'><b>六、测试报告（对应 TEST_REPORT）</b>'
  +'<p class="mut">已实测通过（构建期探针/模拟）：新档 → 1-1 战斗结算入账 → 英雄升级扣费与属性公式 → 刷新存档恢复且初始资源不重发 → 招募扣券与重复转碎片 → 同种子两局结果一致 → 2000 抽概率分布 → 挂机 60 分钟公式 → 4 名 Boss 在推荐等级可通关。</p>'
+ +'<p class="mut">本轮返修 · 可靠性合入（预览分支）：① 资源副本结算——战斗创建时保存副本类型/难度（dunType/dunDiff），金币宝库难度 1 胜利结算按 DUNGEON_DEF 公式发奖，不再因元数据缺失报错；② 战斗时钟——改为真实墙钟累积、每满 100ms 推进一个逻辑步：1× 时墙钟 1 秒 B.t 恰好 +1000ms，2×/3× 等比，单帧增量上限 250ms，暂停/切后台回来不补步快进；单位初始攻击间隔改走战斗种子随机，同配置同种子可复现；③ 存档安全——saveNow 改为写入串行队列且等待 IndexedDB 事务完成才算成功，失败会 reject；每次写入前把上一份完好主档轮换为自动备份；启动时主档校验不过先用备份恢复，备份也不可用则停在恢复页（不自动清档，只有玩家明确选择才开始新游戏）；导入校验加严（核心资源/英雄/阵容/装备/设置/挂机结构逐项校验），迁移改为深层缺省补齐（如 settings 只剩 sfx 时 speed 等字段恢复默认而非 undefined）；挂机收益加时钟回拨保护（系统时间倒退不产生负收益）；④ 统一领奖与任务/活跃宝箱/签到/邮件/招募/扫荡/赛季兑换/模拟充值各领取与购买，全部改为「先落盘成功、再报成功演出」，落盘失败整体回滚、保留领取资格并提示重试，不会出现假「已入账」；⑤ 宝箱 20 秒刷新与音效的 window.S 判断已修正为直接读顶层状态 S（顶层 let 不挂 window，原判断恒假导致宝箱金额不刷新、音效开关失效）；⑥ 小屏布局——320/390 下顶栏改为两行（标题+按钮一行、五项资源整行均分），金币等资源不再被裁；目标缎带改紧凑并下移公会大厅入口避让；小队条在小屏改紧凑单行，编队/出征两按钮同排不落单。账目更正：8 小时挂机金币为 5000+7200=12200（此前口头汇报的 12000 为算术笔误），经验 3000+2880=5880 不变。</p>'
  +'<p class="mut">本轮修复 · 集火破蓄无界面模拟证据（初始五人 Lv12、脱装备、自动大招、关卡 1-10，Boss 最大生命 12244，破蓄线 6% = 734）：<br>集火组 5 个种子（stage9 / focus-a / focus-b / focus-c / focus-d）：每局第一次「横扫别挡路」都在 11.1–11.3s 被集火打断，日志原文「荆冠巨獾 的『横扫别挡路』被集火打断！（集火破蓄达成：蓄力期间累计直接伤害达到其最大生命 6%）」，共 5/5；第二次横扫因窗口伤害不足正常释放，每局最终胜利（36.7–37.4 秒）。<br>不集火组（种子 stage9）：集火打断 0 次，横扫在 11.3s 与 22.5s 两次正常释放。<br>不可打断校验（单位级）：失眠观星者「熬夜流星」不可打断段期间持续承受直接伤害，蓄力不被破蓄、破蓄进度保持 0；可打断蓄力在累计 767 点直接伤害（≥734）时被清蓄并打出集火打断日志。</p>'
  +'<p class="mut">本轮补证 · 满能量手动大招（探针实机，关卡 1-10 荆冠巨獾，初始五人 Lv12、脱装备、自动大招关闭——战斗全程「自动大招」按钮未点亮）：开战后逐帧采样苔盾大招按钮能量条，由 42% 单调升至 100%（开战约 10 秒，期间无任何自动释放），随后真实点击其大招按钮「苔盾 · 锅盖防线」。释放帧截图留档显示：大招横幅「苔盾 · 锅盖防线」弹出，五名队友同时出现「护盾」飘字；战斗日志逐行记录「苔盾 为 X 施加护盾 358」（荷铃 / 叶弦 / 铜哨三行在日志窗内可见，星盔、苔盾两行已被后续日志顶出可见区，但两人头顶护盾数值 358 与 788 在画面中可见）。数值核对：苔盾战斗生命 = 3258 × 森芽三人羁绊 1.1 = 3583，其 10% = 358.3 → 每人护盾 358，与日志逐行一致；苔盾本人总护盾 788 = 主动「看这里」残盾 430 + 大招 358；点击后苔盾能量 100 → 0，其余四人能量与点击前采样一致（星盔 66% / 荷铃 66% / 叶弦 80% / 铜哨 78%），未受影响。结论：手动大招通道（自行攒满能量 → 点按按钮 → 原子释放 → 全队护盾按公式入账）实机验证通过。</p>'
  +'<p class="mut">本轮快速回归（与上项同一探针会话连续完成，全程零控制台报错）：① 新档首战——点当前目标「前往」直达 1-1 战前页，开战 8 秒三星胜利，结算金币 +120、经验 +60（其后顶栏经调试 +1 万反推为 5120 / 3060，与初始 5000 / 3000 对账一致）；② 初始五人 Lv1 → Lv12 逐人升级，总扣费 8140 金币 / 4400 经验（每人 1628 / 880，与公式 Σ(40+18L) / Σ(20+10L) 一致），余额 6980 / 8660；③ 挂机领取——调试快进 8 小时后，挂机卡显示速率 95 金/分、86 经验/分（S=40：15+2×40、6+2×40）、已累计 480 分钟，点「领取」入账金币 +45600、经验 +41280、装备 +8（提示合并为一条），余额 52580 / 49940，挂机卡清零；④ 整页刷新——顶栏 5.3 万 / 5 万 / 钻石 700 / 券 10 与刷新前一致，当前目标、挂机速率与五人 Lv12 全部恢复，序章不再重弹。三项回归无异常。</p>'
@@ -2685,7 +2847,7 @@ function vSettings(){
  +tgl('sfx','音效')+tgl('music','音乐（合成轻音乐）','toggleMusic()')+tgl('fx','战斗音效细节')+tgl('flash','特效表现（飘字/闪光）')+tgl('autoUlt','默认自动大招')
  +'<div class="switchrow"><span>默认战斗倍速</span><span><button class="btn sm '+(S.settings.speed===1?'':'ghost')+'" onclick="S.settings.speed=1;save();render()">1×</button> <button class="btn sm '+(S.settings.speed===2?'':'ghost')+'" onclick="S.settings.speed=2;save();render()">2×</button> <button class="btn sm '+(S.settings.speed===3?'':'ghost')+'" onclick="S.settings.speed=3;save();render()">3×</button></span></div>'
  +'</div>'
- +'<div class="panel"><b>存档（本机 IndexedDB 自动保存）</b><div class="mut" style="margin:6px 0">玩家 ID：'+S.playerId+' · 存档版本 schema '+SCHEMA+' · 关键操作后自动保存，刷新自动恢复；初始资源只发放一次。也可以导出 JSON 备份、跨设备导入。</div>'
+ +'<div class="panel"><b>存档（本机 IndexedDB 自动保存）</b><div class="mut" style="margin:6px 0">玩家 ID：'+S.playerId+' · 存档版本 schema '+SCHEMA+' · 领奖与结算会等存档事务写入成功后才确认到账，保存失败会保留领取资格并提示重试；每次写入前自动轮换一份完好备份，主档损坏时可在恢复页从备份还原。关键操作后自动保存，刷新自动恢复；初始资源只发放一次。也可以导出 JSON 备份、跨设备导入。</div>'
  +'<div class="btnrow"><button class="btn blue" onclick="exportSave()">导出存档</button><button class="btn" onclick="document.getElementById(\'importfile\').click()">导入存档</button><button class="btn red" onclick="resetGame()">重置游戏</button></div></div>'
  +'<div class="panel"><b>'+ICONS.book+' 开发文档（任务书 §37 等价页）</b><div class="mut" style="margin:6px 0">玩法说明、美术规范摘要、素材清单状态、数值说明、存档结构说明、测试报告与开发进度（完成 / 未完 / 下一步），内容与当前实现保持一致。</div><div class="btnrow"><button class="btn blue" onclick="go(\'docs\')">打开文档与进度</button></div></div>'
  +'<div class="panel"><b>'+ICONS.book+' 剧情回看</b><div class="btnrow" style="margin-top:8px">'+Object.keys(STORY).filter(k=>k.indexOf('personal_')!==0).map(k=>'<button class="btn sm ghost" onclick="showStory(\''+k+'\')">'+STORY[k].title+'</button>').join('')+'</div>'
@@ -2699,10 +2861,10 @@ function vSettings(){
 function toggleSet(k){S.settings[k]=!S.settings[k];save();sfx.click();render();}
 function toggleMusic(){S.settings.music=!S.settings.music;music(S.settings.music);save();render();}
 function exportSave(){
- saveNow().then(()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gulu-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('存档已导出');});
+ saveNow().catch(()=>{}).then(()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gulu-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('存档已导出');});
 }
 function resetGame(){openModal('<h3>重置游戏？</h3><p class="mut">将清空当前进度并重新开始（初始资源会重新发放）。此操作不可恢复，建议先导出存档备份。</p><div class="btnrow"><button class="btn red" onclick="doResetGame()">确认重置</button><button class="btn ghost" onclick="closeModal()">取消</button></div>');}
-function doResetGame(){S=defaultState();uidSeq=S.equips.length+1;saveNow();closeModal();go('city');toast('已重置，新的远征开始！');}
+async function doResetGame(){S=defaultState();uidSeq=S.equips.length+1;try{await saveNow();}catch(e){toast('重置已生效，但新存档写入失败：浏览器存储不可用');}closeModal();go('city');toast('已重置，新的远征开始！');}
 function debugRes(){S.res.gold+=10000;S.res.exp+=10000;S.res.dia+=100;S.res.book+=20;S.res.stone+=30;save();renderTop();render();toast('调试资源已发放');}
 function debugHeroes(){HERO_IDS.forEach(id=>{if(!S.heroes[id])S.heroes[id]={lv:1,star:1,sk:{active:1,ult:1,passive:1},spent:{gold:0,exp:0,book:0},isNew:true};});save();render();toast('已解锁全部英雄');}
 function debugIdle(){S.idle.pendMin=480;S.idle.lastCalc=Date.now();save();toast('挂机时间已快进 8 小时，去主城领取');}
@@ -2712,14 +2874,58 @@ $('#importfile').addEventListener('change',e=>{
  const r=new FileReader();r.onload=()=>{try{const st=JSON.parse(r.result);const err=validateSave(st);
   if(err){toast('导入失败：'+err);return;}
   openModal('<h3>导入存档？</h3><p class="mut">将用导入的存档覆盖当前进度（导入前已自动保存当前存档到本机）。</p><div class="btnrow"><button class="btn red" id="doimport">确认导入</button><button class="btn ghost" onclick="closeModal()">取消</button></div>');
-  $('#doimport').onclick=()=>{S=migrate(st);dailyReset();saveNow();closeModal();go('city');toast('导入成功');};
+  $('#doimport').onclick=async()=>{const mig=migrate(st);if(!mig){toast('导入失败：存档版本不兼容');return;}const prev=S;S=mig;dailyReset();try{await saveNow();}catch(e){S=prev;toast('导入失败：浏览器存储不可用，当前进度未改变');return;}closeModal();go('city');toast('导入成功');};
  }catch(err){toast('导入失败：文件不是有效的存档 JSON');}};
  r.readAsText(f);e.target.value='';
 });
+/* ---------------- 坏档恢复页 ----------------
+   主档损坏时绝不静默清档：先尝试自动备份；备份也不可用时停在恢复页，
+   原始数据保持不动，只有玩家明确点「开始新游戏」才会覆盖。 */
+async function showRecoveryPage(){
+ let bakMig=null;
+ try{const bak=await loadBackup();if(bak)bakMig=migrate(bak);if(bakMig&&validateSave(bakMig)!==null)bakMig=null;}catch(e){}
+ window.__bakSave=bakMig;
+ $('#view').innerHTML='<div class="page"><div class="panel"><h3 style="margin-top:0">存档读取异常</h3>'
+ +'<p class="mut">主存档数据不完整或已损坏，游戏已停止自动覆盖——原数据仍保留在本机，没有被清空。'
+ +(bakMig?'检测到一份完好的自动备份，可以一键恢复到备份时的进度。':'未找到可用的自动备份。')
+ +'</p><div class="btnrow">'
+ +(bakMig?'<button class="btn green" onclick="recoveryRestore()">从自动备份恢复</button>':'')
+ +'<button class="btn" onclick="location.reload()">重新加载</button>'
+ +'<button class="btn red" onclick="recoveryNew()">开始新游戏（放弃旧档）</button></div>'
+ +'<p class="mut" style="margin-top:8px">若反复出现此页，可能是浏览器存储空间不足或处于无痕模式；恢复或处理后建议到设置页导出一份 JSON 备份。</p></div></div>';
+}
+async function recoveryRestore(){
+ if(!window.__bakSave)return;
+ S=window.__bakSave;window.__bakSave=null;
+ uidSeq=1000+S.equips.length*7+Object.keys(S.heroes).length;
+ dailyReset();
+ try{await saveNow();toast('已从自动备份恢复存档');}
+ catch(e){toast('已恢复到当前页面，但写回失败：请勿刷新，先到设置页导出备份');}
+ render();
+}
+async function recoveryNew(){
+ S=defaultState();
+ uidSeq=1000+S.equips.length*7+Object.keys(S.heroes).length;
+ dailyReset();
+ try{await saveNow();}catch(e){toast('新存档写入失败：浏览器存储不可用，刷新将丢失进度');}
+ closeModal();render();toast('已开始新游戏');
+}
 /* ---------------- 启动 ---------------- */
 (async function boot(){
- const loaded=await loadSave();
- S=migrate(loaded)||defaultState();
+ let raw=null,loadFailed=false;
+ try{raw=await loadSave();}catch(e){loadFailed=true;}
+ if(loadFailed){showRecoveryPage();return;}
+ if(raw){
+  const mig=migrate(raw);
+  if(mig&&validateSave(mig)===null){S=mig;}
+  else{
+   /* 主档不可用：先走自动备份，不直接进新档 */
+   let bakMig=null;
+   try{const bak=await loadBackup();if(bak)bakMig=migrate(bak);if(bakMig&&validateSave(bakMig)!==null)bakMig=null;}catch(e){}
+   if(bakMig){S=bakMig;setTimeout(()=>toast('主存档损坏，已自动从最近备份恢复'),600);saveNow().catch(()=>{});}
+   else{showRecoveryPage();return;}
+  }
+ } else S=defaultState();
  uidSeq=1000+S.equips.length*7+Object.keys(S.heroes).length;
  dailyReset();save();
  render();
