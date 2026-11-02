@@ -74,3 +74,7 @@
 - 版本同步分支：`preview/city-v2-20261101`（自 main c5eca89 新建，不动 main、不合并 PR）。目录 `mtstyle-preview/` 含 city2 单文件、city1 与第 4 轮备份、两个构建脚本、本文档与 QA 记录；图片已内嵌，原始素材在仓库根目录 `assets/`。
 - 存档隔离：预览只用 localStorage 键 `gulu-mtstyle-v1`；原游戏用 IndexedDB `gulu-expedition`，互不读写。
 - 大招状态：战斗引擎仍含能量/大招机制，改战斗时须机制、界面、数值一起检查。
+
+## 主城 v3（2026.11.02-city3）
+- 公会大厅 v3 与主城构图修正（见 QA_SCREENSHOTS.md v3 条目）；战斗引擎、数值、存档键未动，
+  战斗内能量/大招机制仍在，改战斗时须机制、界面、数值一起检查。
