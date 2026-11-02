@@ -1,0 +1,108 @@
+/* ==== 公会大厅 v4：室内场景（水彩檐口 + 透视石地 + 壁炉灯光 + 家具入口） ==== */
+.guildhall4{position:relative}
+.gh4-backrow{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.gh4-backrow .mut{font-size:12px}
+.gh4-scene{position:relative;overflow:hidden;border-radius:16px;border:2px solid #8a5a12;box-shadow:0 8px 18px rgba(40,25,8,.35);height:352px;color:#fff3d0;background:linear-gradient(180deg,#caa06e,#b78d5c 44%,#9a7346 45%,#7d5a34 100%)}
+.gh4-eave{position:absolute;left:0;right:0;top:0;height:66px;background-size:cover;background-position:50% 32%;z-index:1;-webkit-mask-image:linear-gradient(180deg,#000 72%,transparent);mask-image:linear-gradient(180deg,#000 72%,transparent)}
+.gh4-beam{position:absolute;top:58px;bottom:118px;width:13px;background:linear-gradient(90deg,#5d3a1e,#8a5a30 45%,#4f3018);box-shadow:2px 0 5px rgba(0,0,0,.3);z-index:1}
+.gh4-beam.bl{left:11%}.gh4-beam.br{right:11%}
+.gh4-side{position:absolute;top:58px;bottom:118px;width:15%;z-index:1;pointer-events:none}
+.gh4-side.sl{left:0;clip-path:polygon(0 0,100% 6%,100% 100%,0 100%);background:linear-gradient(90deg,rgba(52,32,16,.5),rgba(52,32,16,.08))}
+.gh4-side.sr{right:0;clip-path:polygon(0 6%,100% 0,100% 100%,0 100%);background:linear-gradient(270deg,rgba(52,32,16,.5),rgba(52,32,16,.08))}
+.gh4-wallshade{position:absolute;inset:58px 0 118px 0;background:linear-gradient(180deg,rgba(255,225,150,.14),transparent 34%,rgba(40,22,10,.18));z-index:1;pointer-events:none}
+.gh4-win{position:absolute;top:74px;right:5%;width:46px;height:62px;border-radius:23px 23px 6px 6px;border:3px solid #5a361c;background:linear-gradient(180deg,#ffe9a8,#f7c86a 55%,#e8a94e);box-shadow:0 0 20px rgba(255,205,100,.6);z-index:1}
+.gh4-win::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:3px;background:#5a361c;transform:translateX(-50%)}
+.gh4-win::after{content:'';position:absolute;left:0;right:0;top:50%;height:3px;background:#5a361c}
+.gh4-fire{position:absolute;left:4%;top:72px;width:56px;height:78px;z-index:1;background:linear-gradient(180deg,#8f8070,#6d5f4f);border:3px solid #4a3f33;border-radius:10px 10px 4px 4px;box-shadow:inset 0 0 0 3px rgba(255,235,180,.15),0 4px 8px rgba(0,0,0,.3)}
+.gh4-fire::before{content:'';position:absolute;left:50%;bottom:8px;width:30px;height:36px;transform:translateX(-50%);border-radius:15px 15px 4px 4px;background:#2c2015}
+.gh4-flame{position:absolute;left:50%;bottom:10px;width:20px;height:28px;transform:translateX(-50%);border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:radial-gradient(circle at 50% 72%,#fff7c4 0%,#ffc93c 45%,#f07b1d 78%,rgba(240,123,29,0) 100%);animation:gh4flame 1s ease-in-out infinite alternate;z-index:2}
+@keyframes gh4flame{from{transform:translateX(-50%) scaleY(.9)}to{transform:translateX(-50%) scaleY(1.1)}}
+.gh4-lamp{position:absolute;left:50%;top:0;width:26px;height:74px;transform:translateX(-50%);z-index:2;pointer-events:none}
+.gh4-chain{position:absolute;left:50%;top:0;width:3px;height:38px;background:#4a2d17;transform:translateX(-50%)}
+.gh4-lampbulb{position:absolute;left:50%;bottom:0;width:26px;height:30px;transform:translateX(-50%);background:radial-gradient(circle at 50% 40%,#fff3c0,#f7c65a 60%,#d99a26);border:2px solid #6b4423;border-radius:50% 50% 46% 46%;box-shadow:0 0 22px rgba(255,210,110,.8)}
+.gh4-glow{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 12%,rgba(255,225,150,.30),transparent 46%),radial-gradient(ellipse at 12% 30%,rgba(255,190,90,.16),transparent 40%),radial-gradient(ellipse at 50% 108%,rgba(255,220,150,.14),transparent 55%)}
+.gh4-floor{position:absolute;left:-8%;right:-8%;bottom:-14px;height:142px;background-size:cover;background-position:50% 18%;transform:perspective(430px) rotateX(26deg);transform-origin:50% 100%;z-index:1}
+.gh4-floor::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,220,150,.10),rgba(52,32,14,.46))}
+.gh4-rug{position:absolute;left:50%;bottom:10px;width:170px;height:34px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at center,#a33b2e 0%,#8a2c20 55%,#6e2118 100%);border:2px solid #e0b45c;opacity:.92;z-index:2}
+.gh4-mote{position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(255,240,190,.85);box-shadow:0 0 6px rgba(255,220,140,.9);z-index:3;pointer-events:none;animation:gh4mote 5s ease-in-out infinite alternate}
+.gh4-mote.m1{left:30%;top:150px}.gh4-mote.m2{left:62%;top:120px;animation-delay:1.2s}.gh4-mote.m3{left:46%;top:200px;animation-delay:2.1s}
+@keyframes gh4mote{from{transform:translateY(0);opacity:.5}to{transform:translateY(-10px);opacity:.95}}
+.gh4-barrel{position:absolute;left:3%;bottom:0;width:34px;height:40px;z-index:2;background:linear-gradient(90deg,#6b4423,#8a5a30 45%,#5d3a1e);border-radius:6px 6px 4px 4px;box-shadow:inset 0 4px 0 rgba(255,220,140,.25);pointer-events:none}
+.gh4-barrel::before{content:'';position:absolute;left:0;right:0;top:12px;height:3px;background:rgba(0,0,0,.35);box-shadow:0 12px 0 rgba(0,0,0,.35)}
+.gh4-wood{position:absolute;right:3%;bottom:0;width:58px;height:30px;z-index:2;background:repeating-linear-gradient(0deg,#7c5228 0 7px,#5e3a18 7px 9px);border-radius:4px 4px 0 0;box-shadow:inset 0 3px 0 rgba(255,220,140,.3);pointer-events:none}
+.gh4-zone{position:absolute;z-index:4;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:0;color:#fff3d0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
+.gh4-zone:active{transform:scale(.95)}
+.gh4-zone:active .gh4-plate{filter:brightness(1.16)}
+.gh4-zone:focus-visible{outline:2px solid #ffd76a;outline-offset:2px}
+.gh4-boss{left:50%;top:82px;transform:translateX(-50%);width:150px}
+.gh4-boss:active{transform:translateX(-50%) scale(.95)}
+.gh4-portal{position:relative;display:block;width:118px;height:132px}
+.gh4-arch{position:absolute;inset:0;border-radius:60px 60px 10px 10px;background:linear-gradient(180deg,#9a8f7c,#7d7263 60%,#665c4e);border:3px solid #4f453a;box-shadow:inset 0 0 0 4px rgba(255,235,180,.18),0 6px 10px rgba(0,0,0,.35)}
+.gh4-swirl{position:absolute;left:50%;top:14px;width:84px;height:84px;transform:translateX(-50%);border-radius:50%;background:conic-gradient(from 0deg,#7fe3d0,#3a9fd8,#7b6ff0,#3a9fd8,#7fe3d0);opacity:.85;animation:gh4spin 9s linear infinite;box-shadow:0 0 18px rgba(110,220,255,.55)}
+@keyframes gh4spin{to{transform:translateX(-50%) rotate(360deg)}}
+.gh4-portal img{position:absolute;left:50%;bottom:6px;width:88px;height:88px;transform:translateX(-50%);object-fit:contain;filter:drop-shadow(0 4px 5px rgba(0,0,0,.45))}
+.gh4-dais{position:relative;display:block;width:132px;height:12px;margin-top:2px;background:linear-gradient(180deg,#a89a83,#7d7263);border:2px solid #4f453a;border-radius:4px}
+.gh4-counter{left:3%;top:192px;width:110px}
+.gh4-board{right:3%;top:192px;width:110px}
+.gh4-counterbox{position:relative;display:block;width:104px;height:70px;border-radius:8px;background:linear-gradient(180deg,#a9743f,#7c5228 70%,#5e3a18);border:2px solid #4a2d17;box-shadow:0 5px 8px rgba(0,0,0,.35),inset 0 3px 0 rgba(255,220,140,.35)}
+.gh4-counterbox::before{content:'';position:absolute;left:6px;right:6px;bottom:6px;height:26px;border-radius:4px;background:repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 2px,transparent 2px 22px)}
+.gh4-mug{position:absolute;top:-14px;left:14px;width:14px;height:14px;border-radius:2px 2px 4px 4px;background:linear-gradient(180deg,#e8c47a,#b98a3e);box-shadow:inset -2px 0 0 rgba(0,0,0,.18)}
+.gh4-mug::before{content:'';position:absolute;right:-4px;top:2px;width:5px;height:8px;border:2px solid #b98a3e;border-left:0;border-radius:0 4px 4px 0}
+.gh4-mug.m2{left:44px}
+.gh4-coins{position:absolute;top:-12px;right:10px;width:20px;height:12px}
+.gh4-coins::before{content:'';position:absolute;left:0;bottom:0;width:20px;height:6px;border-radius:50%;background:#f4c93f;box-shadow:0 -4px 0 #e0a92c,0 -8px 0 #f4c93f}
+.gh4-boardbox{position:relative;display:block;width:104px;height:70px;border-radius:6px;background:linear-gradient(180deg,#8a5c33,#6b4323);border:3px solid #4a2d17;box-shadow:0 5px 8px rgba(0,0,0,.35)}
+.gh4-pin{position:absolute;width:24px;height:30px;background:#f7ead0;border:1px solid #cbb98f;border-radius:2px}
+.gh4-pin::before{content:'';position:absolute;left:4px;right:4px;top:6px;height:2px;background:#a89a78;box-shadow:0 6px 0 #a89a78,0 12px 0 #a89a78}
+.gh4-pin.p1{left:8px;top:10px;transform:rotate(-5deg)}
+.gh4-pin.p2{left:38px;top:14px;transform:rotate(3deg)}
+.gh4-pin.p3{left:66px;top:9px;transform:rotate(-3deg)}
+.gh4-plate{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;background:linear-gradient(180deg,#a9743f,#7c5228);border:2px solid #5a361c;border-radius:8px;padding:5px 9px;font-size:13px;font-weight:700;color:#ffe9b0;box-shadow:0 3px 6px rgba(0,0,0,.35)}
+.gh4-plate svg{width:16px;height:16px;flex:none}
+.gh4-zone.sel .gh4-plate{background:linear-gradient(180deg,#f7d878,#d9a52c);color:#3a2408;border-color:#8a5a12}
+.gh4-sub{font-size:11px;color:#ffe9b0;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.gh4-detail{margin-top:10px}
+.gh4-anim{animation:gh4In .22s ease}
+@keyframes gh4In{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.gh4-bossrow{display:flex;gap:10px;align-items:center}
+.gh4-bossinfo{flex:1;min-width:0}
+.gh4-bar{height:8px;border-radius:99px;background:rgba(0,0,0,.22);overflow:hidden;margin:6px 0}
+.gh4-bar i{display:block;height:100%;background:linear-gradient(90deg,#f4c93f,#e8842c);border-radius:99px}
+.gh4-rank{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.gh4-rank .tag.me{background:#fff3cf;color:#6b4323;border-color:#d9a52c}
+.gh4-big{width:100%;margin-top:8px;padding:11px 0}
+.gh4-shopbal{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.gh4-shopbal svg{width:22px;height:22px;flex:none}
+.gh4-shopbal .mut{margin-left:auto}
+.gh4-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.gh4-card{display:flex;flex-direction:column;align-items:center;gap:3px;background:#fff8e6;border:1.5px solid #d9b36a;border-radius:12px;padding:10px 4px;color:#5a3a18}
+.gh4-card svg{width:28px;height:28px;flex:none}
+.gh4-card b{font-size:13px}
+.gh4-card span{font-size:12px;color:#8a6a34}
+.gh4-card .btn{margin-top:4px;width:100%}
+.gh4-trialrow{display:flex;gap:10px;align-items:center}
+.gh4-foes{display:flex}
+.gh4-foes img{width:42px;height:42px;margin-left:-8px;border:2px solid #fff3cf;border-radius:50%;background:#2c3b2c;object-fit:cover}
+.gh4-foes img:first-child{margin-left:0}
+.gh4-trialinfo{flex:1;min-width:0}
+.gh4-dots{display:flex;align-items:center;gap:5px;margin-top:4px}
+.gh4-dot{width:11px;height:11px;border-radius:50%;border:2px solid #8a6a34;background:transparent}
+.gh4-dot.on{background:#e8842c;border-color:#e8842c}
+.gh4-rules{margin:8px 0;line-height:1.7}
+.gh4-note{margin-top:8px;text-align:center}
+@media (max-width:360px){
+ .gh4-scene{height:330px}
+ .gh4-boss{width:128px;top:78px}
+ .gh4-portal{width:100px;height:116px}
+ .gh4-portal img{width:76px;height:76px}
+ .gh4-swirl{width:72px;height:72px}
+ .gh4-dais{width:112px}
+ .gh4-counter{width:96px;top:186px}
+ .gh4-board{width:96px;top:186px}
+ .gh4-counterbox{width:90px;height:62px}
+ .gh4-boardbox{width:90px;height:62px}
+ .gh4-pin.p1{left:6px}.gh4-pin.p2{left:32px}.gh4-pin.p3{left:56px}
+ .gh4-plate{font-size:11px;padding:4px 6px}
+ .gh4-fire{width:48px;height:68px}
+ .gh4-win{width:40px;height:54px}
+}
