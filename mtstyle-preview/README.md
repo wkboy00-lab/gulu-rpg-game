@@ -2,15 +2,16 @@
 
 ## 当前版本
 
-- **版本号：2026.11.02-city4**（主城 v4 · 公会大厅 v4），设置页“版本”面板可查（常量 `APP_VERSION`）。
-- **分支：`preview/city4-20261102`**（自 `preview/city-v2-20261101` 的 city3 提交 `e5f6e87b79d959f0ad8d5bd523515ae22c0b7c32` 新建的独立分支；本分支只加 `mtstyle-preview/` 目录，不动 `main`，不合并 PR，不覆盖已有分支，不改仓库可见性与 Pages 发布源）。
-- 本次提交在 city3 之上推进：`index.html` 更新为 city4，并补一份 city3 备份与 city4 构建脚本及片段；其余文件原样保留。
+- **版本号：2026.11.03-city5**（主城 v4 · 公会大厅 v5），设置页“版本”面板可查（常量 `APP_VERSION`）。
+- **分支：`preview/city5-20261103`**（自 `preview/city4-20261102` 的 city4 提交 `3fba2f7840c0912d450a731d0403d5a2bf17a8f8` 新建的独立分支；本分支只加 `mtstyle-preview/` 目录，不动 `main`，不合并 PR，不覆盖已有分支，不改仓库可见性与 Pages 发布源）。
+- 本次提交在 city4 之上推进：`index.html` 更新为 city5，并补一份 city4 备份与 city5 构建脚本及片段；其余文件原样保留。
 
 ## 文件清单（`mtstyle-preview/`）
 
 | 文件 | 说明 | 字节 | MD5 |
 |---|---|---|---|
-| `index.html` | 当前可玩版 city4（单文件，图片已 base64 内嵌） | 1395157 | 20d7104db38aa5d9a573964df16ebbe4 |
+| `index.html` | 当前可玩版 city5（单文件，图片已 base64 内嵌） | 1533757 | a091ba48d17f95afa6843dfb832d1517 |
+| `index-city4-backup.html` | 上一版 city4（2026.11.02-city4）完整备份 | 1395157 | 20d7104db38aa5d9a573964df16ebbe4 |
 | `index-city3-backup.html` | 上一版 city3（2026.11.02-city3）完整备份 | 1253248 | 7d76a0a069726a4fd7f7f241d964d00d |
 | `index-city2-backup.html` | city2（2026.11.01-city2）完整备份 | 1242724 | d2374403e5528faf03d49e9396d65eb2 |
 | `index-city1-backup.html` | city1（2026.11.01-city1）完整备份 | 1017871 | d667dccaa895a0c74fa386648f44d916 |
@@ -25,14 +26,17 @@
 | `save-panel-fragment.js` | 存档与备份面板片段（核心补丁引用） | 1549 | cd8d36589454bf3626a68409857fb313 |
 | `gh4-scene.css` | 公会 v4 场景样式片段（场景补丁引用） | 11447 | 954b846515993177ab6fbe41fca6a0b7 |
 | `vguild-fragment.js` | 公会 v4 视图片段（场景补丁引用） | 4862 | 314358405437358a37663ca573a56133 |
-| `BORROWING_MAP.md` | 机制借鉴对照表与不可复制清单 | 9716 | 787507b604dff68ab5d684c1a0630d9e |
-| `QA_SCREENSHOTS.md` | 每轮截屏与点按验收记录 | 16430 | 043ee260d1a3b429007889b14b17ae7f |
+| `build-city5-guild.py` | 由 city4 重建 city5 的构建脚本（原画场景 + 热区 + 详情面板） | 3031 | 5fe2365645d671edd974a2a9ce1ccbb9 |
+| `gh5-scene.css` | 公会 v5 场景样式片段（构建脚本引用） | 6843 | f70289500582bfdb24fa8600f55b2ab8 |
+| `vguild5-fragment.js` | 公会 v5 视图片段（构建脚本引用） | 4632 | 117d30a0b72dd722a460e6347534ee42 |
+| `BORROWING_MAP.md` | 机制借鉴对照表与不可复制清单 | 10739 | cc9ea72eb532a6dc641bb64b69cf9090 |
+| `QA_SCREENSHOTS.md` | 每轮截屏与点按验收记录 | 20026 | 54878d095d8e264bc242d7dce7f0ee04 |
 | `README.md` | 本文件 | — | — |
 
 ## 本地运行
 
 直接用浏览器打开 `index.html` 即可游玩（单文件，无需构建、无外部资源）。
-复现链：`index-round4-backup.html` → 运行 `build-home-v1.py` 得 city1 → 运行 `build-home-guild-v2.py` 得 city2 → 运行 `build-guild-v3.py` 得 city3 → 运行 `build-city4-core.py`、`build-city4-scene.py`、`build-city4-fix1.py`、`build-city4-fix2.py` 得 city4。构建脚本内含制作机绝对路径，异机复现时须先改路径；场景补丁另需本地素材（苔盾 5 层 WebP、石地裁切图，见“资源来源”）。复现链已验证：由 city3 备份重建的 city4 与交付文件字节一致（MD5 见上表）。
+复现链：`index-round4-backup.html` → 运行 `build-home-v1.py` 得 city1 → 运行 `build-home-guild-v2.py` 得 city2 → 运行 `build-guild-v3.py` 得 city3 → 运行 `build-city4-core.py`、`build-city4-scene.py`、`build-city4-fix1.py`、`build-city4-fix2.py` 得 city4 → 运行 `build-city5-guild.py` 得 city5。构建脚本内含制作机绝对路径，异机复现时须先改路径；场景补丁另需本地素材（苔盾 5 层 WebP、石地裁切图，见“资源来源”）。复现链已验证：由 city3 备份重建的 city4 与交付文件字节一致（MD5 见上表）。
 
 ## 资源来源
 
@@ -40,7 +44,7 @@
 
 ## 版本号查看位置
 
-打开预览 → 右上齿轮“设置” → “版本”面板，显示 `2026.11.02-city4（主城 v4 · 公会大厅）`。设置页“存档与备份”面板同时显示当前存档键。
+打开预览 → 右上齿轮“设置” → “版本”面板，显示 `2026.11.03-city5（主城 v4 · 公会大厅 v5）`。设置页“存档与备份”面板同时显示当前存档键。
 
 ## 存档隔离与兼容
 
