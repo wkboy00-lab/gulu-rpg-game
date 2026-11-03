@@ -1,0 +1,34 @@
+/* ===== 战斗 v1：苔盾分层动作接入 + 占位静态化 + 结算面板 ===== */
+.fig .figimg img{animation:none!important}
+.fig .figimg .tfig img{width:100%;height:100%;border:none;border-radius:0;box-shadow:none;margin:0}
+.tfig{position:relative;width:84px;height:84px;margin:0 auto;transition:transform .18s ease-out;will-change:transform}
+.tfig .tl{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:none}
+.tfig .tbody{transform-origin:50% 82%;animation:tidBreath 3.8s ease-in-out infinite}
+.tfig .tleg{transform-origin:27% 71%}
+.tfig .theadwrap{position:absolute;inset:0;transform-origin:36% 48%;animation:tidHead 3.8s ease-in-out infinite}
+.tfig .theadwrap .theadimg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.tfig .tshield{transform-origin:57% 60.5%;animation:tidShield 3.8s ease-in-out infinite}
+.tfig .tarm{transform-origin:31.5% 51%;animation:tidArm 3.8s ease-in-out infinite}
+.tfig .tbubble{position:absolute;left:50%;top:50%;width:98%;height:98%;transform:translate(-50%,-50%);border:3px solid rgba(255,215,106,.85);border-radius:50%;background:radial-gradient(circle,rgba(255,240,190,.14),rgba(255,215,106,.05) 70%);box-shadow:0 0 12px rgba(255,215,106,.5);display:none;pointer-events:none}
+.tfig.windup .tbody{animation:none;transform:scaleY(.94) translateY(2px)}
+.tfig.windup .theadwrap{animation:none;transform:rotate(-2deg)}
+.tfig.windup .tshield{animation:none;transform:translateX(-7px) rotate(-7deg)}
+.tfig.windup .tarm{animation:none;transform:translateX(-5px) rotate(-9deg)}
+.tfig.lunge{transform:translateX(var(--lunge,28px))}
+.tfig.lunge .tbody{animation:none;transform:translateX(2px)}
+.tfig.lunge .tshield{animation:none;transform:translateX(5px) scale(1.05)}
+.tfig.contact{transform:translateX(var(--lunge,28px))}
+.tfig.contact .tbody{animation:none;transform:scaleY(.99)}
+.tfig.contact .tshield{animation:none;transform:translateX(7px) scale(1.08)}
+.tfig.return{transform:translateX(0)}
+.tfig.active-windup .tbody{animation:none;transform:scaleY(.97)}
+.tfig.active-windup .tshield{animation:none;transform:translateX(-4px) scale(1.02)}
+.tfig.active-hold .tbody{animation:none;transform:scaleY(1.01)}
+.tfig.active-hold .tshield{animation:none;transform:translateX(6px) scale(1.1)}
+.tfig.hurt .tbody{animation:none;transform:rotate(-4deg) translateX(-3px)}
+.tfig.hurt .tshield{animation:none;transform:translate(-4px,-6px) rotate(-8deg)}
+.tfig.passive{filter:drop-shadow(0 0 6px rgba(140,220,120,.9))}
+#bstage.paused .tfig .tl,#bstage.paused .tfig .theadwrap,#bstage.paused .tlid,#bstage.paused .tshadow,#bstage.paused .floatdmg{animation-play-state:paused!important}
+.floatdmg.heal{color:#a9e89a;font-size:17px}
+.result .stars{font-size:26px;color:#f2b63c;letter-spacing:4px;margin:4px 0}
+.result .kv{margin:6px 0}
